@@ -1,4 +1,5 @@
 package contenttype // import "github.com/teamwork/middleware/contenttype"
+
 import (
 	"mime"
 	"net/http"

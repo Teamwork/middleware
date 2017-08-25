@@ -8,6 +8,12 @@
   version = "2017.07.27"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/evalphobia/logrus_sentry"
   packages = ["."]
   revision = "9f8f2d05a621e616d9341ac75374eb8402ae0630"
@@ -33,6 +39,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/golang/gddo"
+  packages = ["httputil/header"]
+  revision = "34ff3df85ae83c83da3ea7b1aa09fb5fc843c468"
+
+[[projects]]
+  branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
   revision = "392dba7d905ed5d04a5794ba89f558b27e2ba1ca"
@@ -51,9 +63,9 @@
 
 [[projects]]
   name = "github.com/labstack/echo"
-  packages = [".","context","engine","engine/standard","log"]
-  revision = "e08070379af60f5b9c0fb5bb2d1527ba9624fe43"
-  version = "v2.2.0"
+  packages = ["."]
+  revision = "cec7629194fe4bf83b0c72d9a02d340c7a1468ac"
+  version = "3.2.3"
 
 [[projects]]
   name = "github.com/labstack/gommon"
@@ -104,6 +116,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
@@ -141,9 +159,21 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/teamwork/httperr"
+  packages = ["."]
+  revision = "dd669ddf66f3b4e603468fbfe77411c6985081f6"
+
+[[projects]]
+  branch = "master"
   name = "github.com/teamwork/log"
   packages = ["."]
   revision = "bfd674500517977050d3fa4e6b10a496826e3a66"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/teamwork/test"
+  packages = ["diff"]
+  revision = "fe7d3af7b99331ddae4f1a1271e652e7b5b3737f"
 
 [[projects]]
   branch = "master"
@@ -160,14 +190,8 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = ["acme","acme/autocert","ssh/terminal"]
   revision = "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "57efc9c3d9f91fb3277f8da1cff370539c4d3dc5"
 
 [[projects]]
   branch = "master"
@@ -196,6 +220,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "12ec9ba4abfb3ba10fae65a48a6a5c405d335c7e63475d775f2d4ede3c5bd59d"
+  inputs-digest = "d3746ab635fdde4f6b3bc476ea9f4040503f4037bb71b8856885017cb317bc97"
   solver-name = "gps-cdcl"
   solver-version = 1

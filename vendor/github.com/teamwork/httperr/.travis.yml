@@ -1,0 +1,25 @@
+language: go
+go:
+  - 1.8.x
+
+cache:
+  directories:
+    - $HOME/gopath/pkg
+
+notifications:
+  webhooks: http://twbot-180547646.us-east-1.elb.amazonaws.com:8182/travis/buildstatus
+  email: false
+
+install:
+  # Compensate for poor naming decisions
+  - ln -s $HOME/gopath/src/github.com/Teamwork $HOME/gopath/src/github.com/teamwork
+  - mkdir -p $HOME/gopath/bin && curl https://glide.sh/get | sh
+  - glide update
+  - go get -u gopkg.in/alecthomas/gometalinter.v1 && gometalinter.v1 --install
+
+script:
+  - cd $HOME/gopath/src/github.com/teamwork/httperr
+
+  - go test -race -cover -covermode=set -coverprofile=coverage.txt && bash <(curl -s https://codecov.io/bash)
+  - gometalinter.v1 --config .linter_test.json
+  - gometalinter.v1 --config .linter.json
