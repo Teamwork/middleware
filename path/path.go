@@ -1,4 +1,4 @@
-package middleware
+package path // import "github.com/teamwork/middleware/path"
 
 import (
 	"net/http"
@@ -8,9 +8,9 @@ import (
 	"github.com/teamwork/log"
 )
 
-// Path prevents "../../../../../etc/passwd" type path traversal attacks for
-// static routes: all paths must begin with root path.
-func Path(root string) func(f http.HandlerFunc) http.HandlerFunc {
+// BlockTraversal prevents "../../../../../etc/passwd" type path traversal
+// attacks for static routes: all paths must begin with root path.
+func BlockTraversal(root string) func(f http.HandlerFunc) http.HandlerFunc {
 	return func(f http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 

@@ -1,4 +1,4 @@
-package middleware // import "github.com/teamwork/middleware"
+package cors // import "github.com/teamwork/middleware/cors"
 
 import (
 	"net/http"
@@ -19,6 +19,7 @@ const (
 	TRACE   = "TRACE"
 )
 
+// Constants for header types
 const (
 	HeaderAccept              = "Accept"
 	HeaderAcceptEncoding      = "Accept-Encoding"
@@ -67,15 +68,15 @@ const (
 )
 
 type (
-	// CORSConfig defines the config for CORS middleware.
-	CORSConfig struct {
+	// Config defines the config for CORS middleware.
+	Config struct {
 		// AllowOrigin defines a list of origins that may access the resource.
 		// Optional, with default value as []string{"*"}.
 		AllowOrigins []string
 
 		// AllowMethods defines a list methods allowed when accessing the resource.
 		// This is used in response to a preflight request.
-		// Optional, with default value as `DefaultCORSConfig.AllowMethods`.
+		// Optional, with default value as `DefaultConfig.AllowMethods`.
 		AllowMethods []string
 
 		// AllowHeaders defines a list of request headers that can be used when
@@ -103,30 +104,30 @@ type (
 )
 
 var (
-	// DefaultCORSConfig is the default CORS middleware config.
-	DefaultCORSConfig = CORSConfig{
+	// DefaultConfig is the default CORS middleware config.
+	DefaultConfig = Config{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{GET, HEAD, PUT, POST, DELETE},
 	}
 )
 
-// CORS returns a Cross-Origin Resource Sharing (CORS) middleware.
+// Add returns a Cross-Origin Resource Sharing (CORS) middleware.
 // See https://developer.mozilla.org/en/docs/Web/HTTP/Access_control_CORS
-func CORS(f http.HandlerFunc) http.HandlerFunc {
-	return CORSWithConfig(DefaultCORSConfig)(f)
+func Add(f http.HandlerFunc) http.HandlerFunc {
+	return WithConfig(DefaultConfig)(f)
 }
 
-// CORSWithConfig returns a CORS middleware from config.
+// WithConfig returns a CORS middleware from config.
 // See `CORS()`.
-func CORSWithConfig(config CORSConfig) func(f http.HandlerFunc) http.HandlerFunc {
+func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
 	return func(f http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// Defaults
 			if len(config.AllowOrigins) == 0 {
-				config.AllowOrigins = DefaultCORSConfig.AllowOrigins
+				config.AllowOrigins = DefaultConfig.AllowOrigins
 			}
 			if len(config.AllowMethods) == 0 {
-				config.AllowMethods = DefaultCORSConfig.AllowMethods
+				config.AllowMethods = DefaultConfig.AllowMethods
 			}
 			allowMethods := strings.Join(config.AllowMethods, ",")
 			allowHeaders := strings.Join(config.AllowHeaders, ",")

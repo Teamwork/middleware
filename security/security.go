@@ -1,4 +1,4 @@
-package middleware // import "github.com/teamwork/middleware"
+package security // import "github.com/teamwork/middleware/security"
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-// SecurityConfig defines the config for Security middleware.
-type SecurityConfig struct {
+// Config defines the config for Security middleware.
+type Config struct {
 	// XFrameOptions controls where this site can be displayed in a frame.
 	//
 	// DENY
@@ -50,8 +50,8 @@ type SecurityConfig struct {
 	XContentTypeOptions string
 }
 
-// DefaultSecurityConfig is the default Security middleware config.
-var DefaultSecurityConfig = SecurityConfig{
+// DefaultConfig is the default Security middleware config.
+var DefaultConfig = Config{
 	XFrameOptions: "SAMEORIGIN",
 
 	// 30 days
@@ -101,13 +101,13 @@ var DefaultSecurityConfig = SecurityConfig{
 	XContentTypeOptions: "nosniff",
 }
 
-// Security sets several security-related headers.
-func Security(rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
-	return SecurityWithConfig(DefaultSecurityConfig, rootDomain)
+// Add sets several security-related headers.
+func Add(rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
+	return WithConfig(DefaultConfig, rootDomain)
 }
 
-// SecurityWithConfig returns a Security middleware from config.
-func SecurityWithConfig(config SecurityConfig, rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
+// WithConfig returns a Security middleware from config.
+func WithConfig(config Config, rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
 	return func(f http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 

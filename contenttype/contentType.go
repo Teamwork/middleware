@@ -1,4 +1,4 @@
-package middleware // import "github.com/teamwork/middleware"
+package contenttype // import "github.com/teamwork/middleware/contenttype"
 import (
 	"mime"
 	"net/http"
@@ -11,9 +11,9 @@ var validContentTypes = []string{
 	"multipart/form-data",
 }
 
-// ValidateContentType ensures that the content type header is set and is one of
+// Validate ensures that the content type header is set and is one of
 // the allowed content types.  This ONLY applies to POST and PUT.
-func ValidateContentType(f http.HandlerFunc) http.HandlerFunc {
+func Validate(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		method := strings.ToUpper(r.Method)
 		if method != "POST" && method != "PUT" {

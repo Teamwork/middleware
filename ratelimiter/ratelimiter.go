@@ -1,4 +1,4 @@
-package middleware
+package ratelimiter // import "github.com/teamwork/middleware/ratelimiter"
 
 import (
 	"fmt"
@@ -13,17 +13,15 @@ import (
 	"github.com/teamwork/log"
 )
 
-var (
-	// perPeriod is the number of API calls (to all endpoints) that can be made
-	// by the client before receiving a 429 error
-	perPeriod     int64 = 20
-	periodSeconds int64 = 60
-)
-
 const (
 	// ErrRateLimit is used when the rate limit is reached and requests are
 	// being throttled.
 	ErrRateLimit = "Rate limit exceeded"
+
+	// perPeriod is the number of API calls (to all endpoints) that can be made
+	// by the client before receiving a 429 error
+	perPeriod     int64 = 20
+	periodSeconds int64 = 60
 )
 
 type rateLimiter struct {
@@ -35,8 +33,8 @@ type rateLimiter struct {
 	tracker *redis.Pool
 }
 
-// RateLimit limits API requests based on the IP address
-func RateLimit(p *redis.Pool) func(f http.HandlerFunc) http.HandlerFunc {
+// Limit limits API requests based on the IP address
+func Limit(p *redis.Pool) func(f http.HandlerFunc) http.HandlerFunc {
 	return func(f http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			rateLimit := newRateLimiter(getKey(r), p)
