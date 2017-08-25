@@ -4,8 +4,66 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+)
 
-	"github.com/labstack/echo"
+// HTTP methods
+const (
+	CONNECT = "CONNECT"
+	DELETE  = "DELETE"
+	GET     = "GET"
+	HEAD    = "HEAD"
+	OPTIONS = "OPTIONS"
+	PATCH   = "PATCH"
+	POST    = "POST"
+	PUT     = "PUT"
+	TRACE   = "TRACE"
+)
+
+const (
+	HeaderAccept              = "Accept"
+	HeaderAcceptEncoding      = "Accept-Encoding"
+	HeaderAllow               = "Allow"
+	HeaderAuthorization       = "Authorization"
+	HeaderContentDisposition  = "Content-Disposition"
+	HeaderContentEncoding     = "Content-Encoding"
+	HeaderContentLength       = "Content-Length"
+	HeaderContentType         = "Content-Type"
+	HeaderCookie              = "Cookie"
+	HeaderSetCookie           = "Set-Cookie"
+	HeaderIfModifiedSince     = "If-Modified-Since"
+	HeaderLastModified        = "Last-Modified"
+	HeaderLocation            = "Location"
+	HeaderUpgrade             = "Upgrade"
+	HeaderVary                = "Vary"
+	HeaderWWWAuthenticate     = "WWW-Authenticate"
+	HeaderXForwardedFor       = "X-Forwarded-For"
+	HeaderXForwardedProto     = "X-Forwarded-Proto"
+	HeaderXForwardedProtocol  = "X-Forwarded-Protocol"
+	HeaderXForwardedSsl       = "X-Forwarded-Ssl"
+	HeaderXUrlScheme          = "X-Url-Scheme"
+	HeaderXHTTPMethodOverride = "X-HTTP-Method-Override"
+	HeaderXRealIP             = "X-Real-IP"
+	HeaderXRequestID          = "X-Request-ID"
+	HeaderServer              = "Server"
+	HeaderOrigin              = "Origin"
+
+	// Access control
+	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
+	HeaderAccessControlRequestHeaders   = "Access-Control-Request-Headers"
+	HeaderAccessControlAllowOrigin      = "Access-Control-Allow-Origin"
+	HeaderAccessControlAllowMethods     = "Access-Control-Allow-Methods"
+	HeaderAccessControlAllowHeaders     = "Access-Control-Allow-Headers"
+	HeaderAccessControlAllowCredentials = "Access-Control-Allow-Credentials"
+	HeaderAccessControlExposeHeaders    = "Access-Control-Expose-Headers"
+	HeaderAccessControlMaxAge           = "Access-Control-Max-Age"
+
+	// Security
+	HeaderStrictTransportSecurity = "Strict-Transport-Security"
+	HeaderXContentTypeOptions     = "X-Content-Type-Options"
+	HeaderXXSSProtection          = "X-XSS-Protection"
+	HeaderXFrameOptions           = "X-Frame-Options"
+	HeaderContentSecurityPolicy   = "Content-Security-Policy"
+	HeaderXCSRFToken              = "X-CSRF-Token"
 )
 
 type (
@@ -48,7 +106,7 @@ var (
 	// DefaultCORSConfig is the default CORS middleware config.
 	DefaultCORSConfig = CORSConfig{
 		AllowOrigins: []string{"*"},
-		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.POST, echo.DELETE},
+		AllowMethods: []string{GET, HEAD, PUT, POST, DELETE},
 	}
 )
 
@@ -75,7 +133,7 @@ func CORSWithConfig(config CORSConfig) func(f http.HandlerFunc) http.HandlerFunc
 			exposeHeaders := strings.Join(config.ExposeHeaders, ",")
 			maxAge := strconv.Itoa(config.MaxAge)
 
-			origin := r.Header.Get(echo.HeaderOrigin)
+			origin := r.Header.Get(HeaderOrigin)
 
 			// Check allowed origins
 			allowedOrigin := ""
@@ -87,46 +145,46 @@ func CORSWithConfig(config CORSConfig) func(f http.HandlerFunc) http.HandlerFunc
 			}
 
 			// Simple request
-			if r.Method != echo.OPTIONS {
-				w.Header().Add(echo.HeaderVary, echo.HeaderOrigin)
+			if r.Method != OPTIONS {
+				w.Header().Add(HeaderVary, HeaderOrigin)
 				if origin == "" || allowedOrigin == "" {
 					f(w, r)
 					return
 				}
-				w.Header().Set(echo.HeaderAccessControlAllowOrigin, allowedOrigin)
+				w.Header().Set(HeaderAccessControlAllowOrigin, allowedOrigin)
 				if config.AllowCredentials {
-					w.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
+					w.Header().Set(HeaderAccessControlAllowCredentials, "true")
 				}
 				if exposeHeaders != "" {
-					w.Header().Set(echo.HeaderAccessControlExposeHeaders, exposeHeaders)
+					w.Header().Set(HeaderAccessControlExposeHeaders, exposeHeaders)
 				}
 				f(w, r)
 				return
 			}
 
 			// Preflight request
-			w.Header().Add(echo.HeaderVary, echo.HeaderOrigin)
-			w.Header().Add(echo.HeaderVary, echo.HeaderAccessControlRequestMethod)
-			w.Header().Add(echo.HeaderVary, echo.HeaderAccessControlRequestHeaders)
+			w.Header().Add(HeaderVary, HeaderOrigin)
+			w.Header().Add(HeaderVary, HeaderAccessControlRequestMethod)
+			w.Header().Add(HeaderVary, HeaderAccessControlRequestHeaders)
 			if origin == "" || allowedOrigin == "" {
 				f(w, r)
 				return
 			}
-			w.Header().Set(echo.HeaderAccessControlAllowOrigin, allowedOrigin)
-			w.Header().Set(echo.HeaderAccessControlAllowMethods, allowMethods)
+			w.Header().Set(HeaderAccessControlAllowOrigin, allowedOrigin)
+			w.Header().Set(HeaderAccessControlAllowMethods, allowMethods)
 			if config.AllowCredentials {
-				w.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
+				w.Header().Set(HeaderAccessControlAllowCredentials, "true")
 			}
 			if allowHeaders != "" {
-				w.Header().Set(echo.HeaderAccessControlAllowHeaders, allowHeaders)
+				w.Header().Set(HeaderAccessControlAllowHeaders, allowHeaders)
 			} else {
-				h := r.Header.Get(echo.HeaderAccessControlRequestHeaders)
+				h := r.Header.Get(HeaderAccessControlRequestHeaders)
 				if h != "" {
-					w.Header().Set(echo.HeaderAccessControlAllowHeaders, h)
+					w.Header().Set(HeaderAccessControlAllowHeaders, h)
 				}
 			}
 			if config.MaxAge > 0 {
-				w.Header().Set(echo.HeaderAccessControlMaxAge, maxAge)
+				w.Header().Set(HeaderAccessControlMaxAge, maxAge)
 			}
 
 			w.WriteHeader(http.StatusNoContent)

@@ -1,4 +1,5 @@
 package middleware // import "github.com/teamwork/middleware"
+
 import "net/http"
 
 // NoCache sets the Cache-Control header to "no-cache" to prevent browsing
