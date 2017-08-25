@@ -2,15 +2,15 @@
 //
 // It will also return an appropriate response to the client (HTML, JSON, or
 // text).
-package rescue // import "github.com/teamwork/middlware/rescue"
+package rescue // import "github.com/teamwork/middleware/rescue"
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime/debug"
 
 	"github.com/kr/pretty"
-	"github.com/labstack/echo"
 	"github.com/spf13/viper"
 
 	"github.com/teamwork/log"
@@ -21,55 +21,58 @@ import (
 //
 // The extraFields callback can be used to add extra fields to the log (such as
 // perhaps a installation ID or user ID from the session).
-func Handle(extraFields func(echo.Context, *log.Entry) *log.Entry) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+func Handle(extraFields func(*log.Entry) *log.Entry) func(f http.HandlerFunc) http.HandlerFunc {
+	return func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
 			l := log.Module("panic handler")
 			defer func() {
-				if r := recover(); r != nil {
+				if rec := recover(); r != nil {
 					var err error
-					switch r := r.(type) {
+					switch rec := rec.(type) {
 					case error:
-						err = r
+						err = rec
 					case map[string]interface{}:
-						err, _ = r["error"].(error)
+						err, _ = rec["error"].(error)
 					default:
-						err = pretty.Errorf("%v", r)
+						err = pretty.Errorf("%v", rec)
 					}
 
 					if extraFields != nil {
-						l = extraFields(c, l)
+						l = extraFields(l)
 					}
 
 					// Report to Sentry.
 					l.Err(err)
 
-					switch {
+					w.WriteHeader(http.StatusInternalServerError)
 
+					switch {
 					// Show panic in browser on dev.
 					case viper.GetBool("dev.enabled"):
-						if c.Request().Header().Get("X-Requested-With") == "XMLHttpRequest" {
-							c.JSON(http.StatusInternalServerError, err.Error())
+						if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+							w.Write([]byte(err.Error()))
 							return
 						}
-						c.HTML(http.StatusInternalServerError,
-							fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
-								err, debug.Stack()))
 
-					// JSON response for AJAX.
-					case c.Request().Header().Get("X-Requested-With") == "XMLHttpRequest":
-						c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						w.Write([]byte(fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
+							err, debug.Stack())))
+						// JSON response for AJAX.
+					case r.Header.Get("X-Requested-With") == "XMLHttpRequest":
+						b, _ := json.Marshal(map[string]interface{}{
 							"message": "Sorry, the server ran into a problem processing this request.",
 						})
-
+						w.Header().Add("Content-Type", "application/json")
+						w.Write(b)
 					// Well, just fall back to text..
 					default:
-						c.String(http.StatusInternalServerError,
-							"Sorry, the server ran into a problem processing this request.")
+						w.Write([]byte("Sorry, the server ran into a problem processing this request."))
 					}
+
+					return
 				}
 			}()
-			return next(c)
+
+			f(w, r)
 		}
 	}
 }

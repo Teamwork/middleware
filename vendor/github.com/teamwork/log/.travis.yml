@@ -1,0 +1,11 @@
+language: go
+go:
+  - 1.8.x
+install:
+  - mv $HOME/gopath/src/github.com/Teamwork $HOME/gopath/src/github.com/teamwork
+  - go get github.com/sirupsen/logrus gopkg.in/gemnasium/logrus-graylog-hook.v2 github.com/evalphobia/logrus_sentry github.com/teamwork/test/diff
+script:
+  - cd $HOME/gopath/src/github.com/teamwork/log
+  - ./bin/test
+  - ./bin/coverage
+  - ./bin/lint
