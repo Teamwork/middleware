@@ -1,4 +1,4 @@
-package httphandlers
+package httperr // import "github.com/teamwork/middleware/cors"
 
 import (
 	"mime"
