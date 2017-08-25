@@ -1,4 +1,4 @@
-package middleware
+package middleware // import "github.com/teamwork/middleware"
 
 import (
 	"net/http"
@@ -54,30 +54,28 @@ var (
 
 // CORS returns a Cross-Origin Resource Sharing (CORS) middleware.
 // See https://developer.mozilla.org/en/docs/Web/HTTP/Access_control_CORS
-func CORS() echo.MiddlewareFunc {
-	return CORSWithConfig(DefaultCORSConfig)
+func CORS(f http.HandlerFunc) http.HandlerFunc {
+	return CORSWithConfig(DefaultCORSConfig)(f)
 }
 
 // CORSWithConfig returns a CORS middleware from config.
 // See `CORS()`.
-func CORSWithConfig(config CORSConfig) echo.MiddlewareFunc {
-	// Defaults
-	if len(config.AllowOrigins) == 0 {
-		config.AllowOrigins = DefaultCORSConfig.AllowOrigins
-	}
-	if len(config.AllowMethods) == 0 {
-		config.AllowMethods = DefaultCORSConfig.AllowMethods
-	}
-	allowMethods := strings.Join(config.AllowMethods, ",")
-	allowHeaders := strings.Join(config.AllowHeaders, ",")
-	exposeHeaders := strings.Join(config.ExposeHeaders, ",")
-	maxAge := strconv.Itoa(config.MaxAge)
+func CORSWithConfig(config CORSConfig) func(f http.HandlerFunc) http.HandlerFunc {
+	return func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			// Defaults
+			if len(config.AllowOrigins) == 0 {
+				config.AllowOrigins = DefaultCORSConfig.AllowOrigins
+			}
+			if len(config.AllowMethods) == 0 {
+				config.AllowMethods = DefaultCORSConfig.AllowMethods
+			}
+			allowMethods := strings.Join(config.AllowMethods, ",")
+			allowHeaders := strings.Join(config.AllowHeaders, ",")
+			exposeHeaders := strings.Join(config.ExposeHeaders, ",")
+			maxAge := strconv.Itoa(config.MaxAge)
 
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			req := c.Request()
-			res := c.Response()
-			origin := req.Header().Get(echo.HeaderOrigin)
+			origin := r.Header.Get(echo.HeaderOrigin)
 
 			// Check allowed origins
 			allowedOrigin := ""
@@ -89,45 +87,50 @@ func CORSWithConfig(config CORSConfig) echo.MiddlewareFunc {
 			}
 
 			// Simple request
-			if req.Method() != echo.OPTIONS {
-				res.Header().Add(echo.HeaderVary, echo.HeaderOrigin)
+			if r.Method != echo.OPTIONS {
+				w.Header().Add(echo.HeaderVary, echo.HeaderOrigin)
 				if origin == "" || allowedOrigin == "" {
-					return next(c)
+					f(w, r)
+					return
 				}
-				res.Header().Set(echo.HeaderAccessControlAllowOrigin, allowedOrigin)
+				w.Header().Set(echo.HeaderAccessControlAllowOrigin, allowedOrigin)
 				if config.AllowCredentials {
-					res.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
+					w.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
 				}
 				if exposeHeaders != "" {
-					res.Header().Set(echo.HeaderAccessControlExposeHeaders, exposeHeaders)
+					w.Header().Set(echo.HeaderAccessControlExposeHeaders, exposeHeaders)
 				}
-				return next(c)
+				f(w, r)
+				return
 			}
 
 			// Preflight request
-			res.Header().Add(echo.HeaderVary, echo.HeaderOrigin)
-			res.Header().Add(echo.HeaderVary, echo.HeaderAccessControlRequestMethod)
-			res.Header().Add(echo.HeaderVary, echo.HeaderAccessControlRequestHeaders)
+			w.Header().Add(echo.HeaderVary, echo.HeaderOrigin)
+			w.Header().Add(echo.HeaderVary, echo.HeaderAccessControlRequestMethod)
+			w.Header().Add(echo.HeaderVary, echo.HeaderAccessControlRequestHeaders)
 			if origin == "" || allowedOrigin == "" {
-				return next(c)
+				f(w, r)
+				return
 			}
-			res.Header().Set(echo.HeaderAccessControlAllowOrigin, allowedOrigin)
-			res.Header().Set(echo.HeaderAccessControlAllowMethods, allowMethods)
+			w.Header().Set(echo.HeaderAccessControlAllowOrigin, allowedOrigin)
+			w.Header().Set(echo.HeaderAccessControlAllowMethods, allowMethods)
 			if config.AllowCredentials {
-				res.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
+				w.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
 			}
 			if allowHeaders != "" {
-				res.Header().Set(echo.HeaderAccessControlAllowHeaders, allowHeaders)
+				w.Header().Set(echo.HeaderAccessControlAllowHeaders, allowHeaders)
 			} else {
-				h := req.Header().Get(echo.HeaderAccessControlRequestHeaders)
+				h := r.Header.Get(echo.HeaderAccessControlRequestHeaders)
 				if h != "" {
-					res.Header().Set(echo.HeaderAccessControlAllowHeaders, h)
+					w.Header().Set(echo.HeaderAccessControlAllowHeaders, h)
 				}
 			}
 			if config.MaxAge > 0 {
-				res.Header().Set(echo.HeaderAccessControlMaxAge, maxAge)
+				w.Header().Set(echo.HeaderAccessControlMaxAge, maxAge)
 			}
-			return c.NoContent(http.StatusNoContent)
+
+			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 	}
 }

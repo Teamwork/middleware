@@ -5,26 +5,35 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/labstack/echo"
-	"github.com/spf13/viper"
 	"github.com/teamwork/log"
 )
 
 // Path prevents "../../../../../etc/passwd" type path traversal attacks for
-// static routes: all paths must begin with DESKPATH.
-func Path() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		root := viper.GetString("deskpath")
-		return func(c echo.Context) error {
-			abs, err := filepath.Abs(root + "/" + c.Request().URI())
+// static routes: all paths must begin with root path.
+func Path(root string) func(f http.HandlerFunc) http.HandlerFunc {
+	return func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+
+			rootAbs, err := filepath.Abs(root)
 			if err != nil {
 				log.Errorf(err, "error getting absolute path")
-				return c.NoContent(http.StatusInternalServerError)
+				w.WriteHeader(http.StatusNoContent)
+				return
 			}
-			if !strings.HasPrefix(abs, root) {
-				return c.NoContent(http.StatusForbidden)
+
+			abs, err := filepath.Abs(root + r.RequestURI)
+			if err != nil {
+				log.Errorf(err, "error getting absolute path")
+				w.WriteHeader(http.StatusNoContent)
+				return
 			}
-			return next(c)
+
+			if !strings.HasPrefix(abs, rootAbs) {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			f(w, r)
 		}
 	}
 }

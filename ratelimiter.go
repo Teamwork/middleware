@@ -2,22 +2,21 @@ package middleware
 
 import (
 	"fmt"
+	"hash/fnv"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/labstack/echo"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
-
-	"github.com/teamwork/desk/helper"
-	"github.com/teamwork/desk/modules/cache"
 	"github.com/teamwork/log"
 )
 
 var (
-	perPeriod     int64 = 120
+	// perPeriod is the number of API calls (to all endpoints) that can be made
+	// by the client before receiving a 429 error
+	perPeriod     int64 = 20
 	periodSeconds int64 = 60
 )
 
@@ -33,48 +32,44 @@ type rateLimiter struct {
 	Reset     int64
 
 	key     string
-	tracker redis.Conn
+	tracker *redis.Pool
 }
 
-// RateLimit limits API requests based on the user ID.
-func RateLimit() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if c.Request().Header().Get("DeskWeb") != "" {
-				return next(c)
-			}
-
-			session, err := helper.GetSession(c)
-			if err != nil {
-				log.Error(err, "failed to get session")
-				return next(c)
-			}
-
-			rateLimit := newRateLimiter(session.ID)
-			c.Response().Header().Add("X-Rate-Limit-Limit", strconv.FormatInt(rateLimit.Limit, 10))
-			c.Response().Header().Add("X-Rate-Limit-Remaining", strconv.FormatInt(rateLimit.Remaining, 10))
-			c.Response().Header().Add("X-Rate-Limit-Reset", strconv.FormatInt(rateLimit.Reset, 10))
+// RateLimit limits API requests based on the IP address
+func RateLimit(p *redis.Pool) func(f http.HandlerFunc) http.HandlerFunc {
+	return func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			rateLimit := newRateLimiter(getKey(r), p)
+			w.Header().Add("X-Rate-Limit-Limit", strconv.FormatInt(rateLimit.Limit, 10))
+			w.Header().Add("X-Rate-Limit-Remaining", strconv.FormatInt(rateLimit.Remaining, 10))
+			w.Header().Add("X-Rate-Limit-Reset", strconv.FormatInt(rateLimit.Reset, 10))
 
 			if rateLimit.limitIsReached() {
-				return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
-					"errors": []map[string]interface{}{
-						{
-							"code":    http.StatusTooManyRequests,
-							"message": ErrRateLimit,
-						},
-					},
-				})
+				w.WriteHeader(http.StatusTooManyRequests)
+				return
 			}
 
-			return next(c)
+			f(w, r)
 		}
 	}
 }
 
-func newRateLimiter(key int64) rateLimiter {
+func getKey(r *http.Request) string {
+	h := fnv.New32a()
+	u, err := url.Parse(r.RequestURI)
+	if err != nil {
+		h.Write([]byte(r.RequestURI)) // nolint: errcheck
+	} else {
+		h.Write([]byte(u.Host)) // nolint: errcheck
+	}
+
+	return fmt.Sprintf("%v-%v", "", h.Sum32())
+}
+
+func newRateLimiter(key string, pool *redis.Pool) rateLimiter {
 	limiter := rateLimiter{
-		key:     fmt.Sprintf("rate-limiter-%d", key),
-		tracker: cache.GetDeskDataConnection(),
+		key:     fmt.Sprintf("launchpad-rate-limiter-%s", key),
+		tracker: pool,
 		Limit:   perPeriod,
 		Reset:   periodSeconds,
 	}
@@ -92,30 +87,39 @@ func (rl *rateLimiter) limitIsReached() bool {
 }
 
 func (rl *rateLimiter) appendRequest() error {
-	if !viper.GetBool("redis.enabled") {
-		// Mocking this is a pain; for now just disable rate limiting if
-		// redis is off.
-		rl.Remaining = 1
-		return nil
-	}
 	accessTime := time.Now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
 		return err
 	}
 
-	rl.tracker.Send("MULTI")
+	conn := rl.tracker.Get()
+	defer conn.Close() // nolint: errcheck
+
+	err = conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
 
 	// Add the new request to the bucket
-	rl.tracker.Send("ZADD", rl.key, accessTime, accessTime)
+	err = conn.Send("ZADD", rl.key, accessTime, accessTime)
+	if err != nil {
+		return err
+	}
 
 	// Remove any keys that are outside of the interval
-	rl.tracker.Send("ZREMRANGEBYSCORE", rl.key, 0, accessTime-duration.Nanoseconds())
+	err = conn.Send("ZREMRANGEBYSCORE", rl.key, 0, accessTime-duration.Nanoseconds())
+	if err != nil {
+		return err
+	}
 
 	// Check how many keys we have in the set
-	rl.tracker.Send("ZRANGE", rl.key, 0, -1)
+	err = conn.Send("ZRANGE", rl.key, 0, -1)
+	if err != nil {
+		return err
+	}
 
-	results, err := redis.Values(rl.tracker.Do("EXEC"))
+	results, err := redis.Values(conn.Do("EXEC"))
 	if err != nil {
 		return errors.Wrap(err, "transaction failed")
 	}

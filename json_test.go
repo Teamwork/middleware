@@ -1,4 +1,4 @@
-package middleware
+package middleware // import "github.com/teamwork/middleware"
 
 import (
 	"net/http"

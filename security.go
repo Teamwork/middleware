@@ -1,11 +1,11 @@
-package middleware
+package middleware // import "github.com/teamwork/middleware"
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo"
-	"github.com/spf13/viper"
 )
 
 // SecurityConfig defines the config for Security middleware.
@@ -102,46 +102,46 @@ var DefaultSecurityConfig = SecurityConfig{
 }
 
 // Security sets several security-related headers.
-func Security() echo.MiddlewareFunc {
-	return SecurityWithConfig(DefaultSecurityConfig)
+func Security(rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
+	return SecurityWithConfig(DefaultSecurityConfig, rootDomain)
 }
 
 // SecurityWithConfig returns a Security middleware from config.
-func SecurityWithConfig(config SecurityConfig) echo.MiddlewareFunc {
-	csp := ""
-	for k, v := range config.ContentSecurityPolicy {
-		csp += fmt.Sprintf("%v %v;", k, strings.Join(v, " "))
-	}
+func SecurityWithConfig(config SecurityConfig, rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
+	return func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
 
-	cspReport := ""
-	for k, v := range config.ContentSecurityPolicyReportOnly {
-		cspReport += fmt.Sprintf("%v %v;", k, strings.Join(v, " "))
-	}
+			csp := ""
+			for k, v := range config.ContentSecurityPolicy {
+				csp += fmt.Sprintf("%v %v;", k, strings.Join(v, " "))
+			}
 
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+			cspReport := ""
+			for k, v := range config.ContentSecurityPolicyReportOnly {
+				cspReport += fmt.Sprintf("%v %v;", k, strings.Join(v, " "))
+			}
+
 			if config.XFrameOptions != "" {
-				c.Response().Header().Set(echo.HeaderXFrameOptions,
+				w.Header().Set(echo.HeaderXFrameOptions,
 					config.XFrameOptions)
 			}
 			if csp != "" {
-				c.Response().Header().Set(echo.HeaderContentSecurityPolicy, csp)
+				w.Header().Set(echo.HeaderContentSecurityPolicy, csp)
 			}
 			if cspReport != "" {
-				c.Response().Header().Set("Content-Security-Policy-Report-Only",
-					cspReport)
+				w.Header().Set("Content-Security-Policy-Report-Only", cspReport)
 			}
 			if config.StrictTransportSecurity != "" &&
-				strings.HasSuffix(c.Request().Host(), viper.GetString("domain.base")) {
-				c.Response().Header().Set(echo.HeaderStrictTransportSecurity,
+				strings.HasSuffix(r.Host, rootDomain) {
+				w.Header().Set(echo.HeaderStrictTransportSecurity,
 					config.StrictTransportSecurity)
 			}
 			if config.XContentTypeOptions != "" {
-				c.Response().Header().Set(echo.HeaderXContentTypeOptions,
+				w.Header().Set(echo.HeaderXContentTypeOptions,
 					config.XContentTypeOptions)
 			}
 
-			return next(c)
+			f(w, r)
 		}
 	}
 }

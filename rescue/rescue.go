@@ -2,7 +2,7 @@
 //
 // It will also return an appropriate response to the client (HTML, JSON, or
 // text).
-package rescue
+package rescue // import "github.com/teamwork/middlware/rescue"
 
 import (
 	"fmt"
