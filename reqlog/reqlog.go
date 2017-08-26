@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
+	"os"
 	"time"
 
 	"github.com/teamwork/log"
@@ -13,6 +13,9 @@ import (
 
 // Options for the Log middleware.
 type Options struct {
+	// File to log to. Defaults to os.Stdout
+	File io.Writer
+
 	// LogStart indicates that a log entry should be added both before and after
 	// running the request. The default is to add a log entry only at the end.
 	LogStart bool
@@ -26,7 +29,10 @@ type Options struct {
 }
 
 // Log requests to stdout.
-func Log(opt Options) {
+func Log(opt Options) func(f http.HandlerFunc) http.HandlerFunc {
+	if opt.File == nil {
+		opt.File = os.Stdin
+	}
 	var end string
 	if opt.LogStart {
 		end = "end   "
@@ -46,17 +52,30 @@ func Log(opt Options) {
 			}
 
 			if opt.LogStart {
-				fmt.Printf("start %v %v%v %v   %v%v\n",
+				fmt.Fprintf(opt.File, "start %v %v%v %v   %v%v\n",
 					end, time.Now().Format(log.TimeFormat), rand, r.Method,
 					r.Host, r.RequestURI)
 			}
 
 			f(w, r)
 
-			statusCode, err := strconv.ParseInt(w.Header().Get("status"), 10, 64)
-			if err != nil {
-				return
-			}
+			// TODO: This doesn't work; the default implementation sets an
+			// unexported field; see http/server.go:1057
+			//   w.status = code
+			//
+			// Need to provide our own ResponseWriter implementation if we want
+			// this to work...
+			//
+			// This may be interesting:
+			// https://github.com/felixge/httpsnoop
+			statusCode := 200
+			//statusCode, err := strconv.ParseInt(w.Header().Get("status"), 10, 64)
+			//if err != nil {
+			//	// TODO: Do something with this?
+			//	fmt.Println(w.Header())
+			//	fmt.Println(err)
+			//	return
+			//}
 
 			status := " "
 			switch {
@@ -68,13 +87,11 @@ func Log(opt Options) {
 				status = "\x1b[1m\x1b[48;5;9m\x1b[38;5;15m%v\x1b[0m"
 			}
 
-			fmt.Printf("%v%v%v %v %v   %v%v\n",
+			fmt.Fprintf(opt.File, "%v%v%v %v %v   %v%v\n",
 				end,
 				time.Now().Format(log.TimeFormat), rand,
 				fmt.Sprintf(status, statusCode), r.Method, r.Host,
 				r.RequestURI)
-
-			return
 		}
 	}
 }
