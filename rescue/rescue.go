@@ -50,22 +50,25 @@ func Handle(extraFields func(*log.Entry) *log.Entry) func(f http.HandlerFunc) ht
 					// Show panic in browser on dev.
 					case viper.GetBool("dev.enabled"):
 						if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
-							w.Write([]byte(err.Error()))
+							w.Write([]byte(err.Error())) // nolint: errcheck
 							return
 						}
 
+						// nolint: errcheck
 						w.Write([]byte(fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
 							err, debug.Stack())))
-						// JSON response for AJAX.
+
+					// JSON response for AJAX.
 					case r.Header.Get("X-Requested-With") == "XMLHttpRequest":
 						b, _ := json.Marshal(map[string]interface{}{
 							"message": "Sorry, the server ran into a problem processing this request.",
 						})
 						w.Header().Add("Content-Type", "application/json")
-						w.Write(b)
+						w.Write(b) // nolint: errcheck
+
 					// Well, just fall back to text..
 					default:
-						w.Write([]byte("Sorry, the server ran into a problem processing this request."))
+						w.Write([]byte("Sorry, the server ran into a problem processing this request.")) // nolint: errcheck
 					}
 
 					return
