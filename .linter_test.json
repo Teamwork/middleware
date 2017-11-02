@@ -1,6 +1,0 @@
-{
-    "Enable":   ["gofmt", "vet", "golint", "ineffassign", "vetshadow", "gas", "unparam", "unused", "varcheck"],
-    "Vendor":   true,
-    "Test":     true,
-    "Deadline": "60s"
-}
