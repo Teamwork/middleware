@@ -1,8 +1,8 @@
-// Package rescue is a middleware to recover() and log panic()s.
+// Package rescueMiddleware recover()s and log panic()s.
 //
 // It will also return an appropriate response to the client (HTML, JSON, or
 // text).
-package rescue // import "github.com/teamwork/middleware/rescue"
+package rescueMiddleware // import "github.com/teamwork/middleware/rescueMiddleware"
 
 import (
 	"encoding/json"

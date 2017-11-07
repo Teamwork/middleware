@@ -1,4 +1,4 @@
-package reqlog // import "github.com/teamwork/middleware/reqlog"
+package logMiddleware // import "github.com/teamwork/middleware/logMiddleware"
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package security // import "github.com/teamwork/middleware/security"
+package securityMiddleware // import "github.com/teamwork/middleware/securityMiddleware"
 
 import (
 	"fmt"

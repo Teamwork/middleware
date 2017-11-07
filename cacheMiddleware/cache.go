@@ -1,4 +1,4 @@
-package cache // import "github.com/teamwork/middleware/cache"
+package cacheMiddleware // import "github.com/teamwork/middleware/cacheMiddleware"
 
 import "net/http"
 

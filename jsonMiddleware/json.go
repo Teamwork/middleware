@@ -1,4 +1,4 @@
-package json // import "github.com/teamwork/middleware/json"
+package jsonMiddleware // import "github.com/teamwork/middleware/jsonMiddleware"
 
 import (
 	"mime"

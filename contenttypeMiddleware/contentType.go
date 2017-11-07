@@ -1,4 +1,4 @@
-package contenttype // import "github.com/teamwork/middleware/contenttype"
+package contenttypeMiddleware // import "github.com/teamwork/middleware/contenttypeMiddleware"
 
 import (
 	"mime"

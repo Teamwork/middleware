@@ -1,4 +1,4 @@
-package path // import "github.com/teamwork/middleware/path"
+package pathMiddleware // import "github.com/teamwork/middleware/pathMiddleware"
 
 import (
 	"net/http"

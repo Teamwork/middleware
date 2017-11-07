@@ -1,4 +1,4 @@
-package ratelimiter // import "github.com/teamwork/middleware/ratelimiter"
+package ratelimitMiddleware // import "github.com/teamwork/middleware/ratelimitMiddleware"
 
 import (
 	"fmt"
