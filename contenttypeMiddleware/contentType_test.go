@@ -92,6 +92,17 @@ func TestValidate(t *testing.T) {
 				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
 			http.StatusBadRequest,
 		},
+		{
+			&http.Request{
+				Method: http.MethodPost,
+				Header: http.Header{
+					"Content-Type": []string{"application/jsonEXTRA"},
+				},
+			},
+			"unknown content type: application/jsonextra; " +
+				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
+			http.StatusBadRequest,
+		},
 	}
 
 	for i, tc := range cases {

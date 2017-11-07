@@ -62,7 +62,7 @@ func Validate(opts *Options) func(http.Handler) http.Handler {
 			}
 
 			for _, valid := range opts.ValidContentTypes {
-				if strings.Contains(ct, valid) {
+				if ct == valid {
 					next.ServeHTTP(w, r)
 					return
 				}
