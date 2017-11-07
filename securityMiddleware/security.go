@@ -1,3 +1,4 @@
+// Package securityMiddleware adds various security-related headers.
 package securityMiddleware // import "github.com/teamwork/middleware/securityMiddleware"
 
 import (

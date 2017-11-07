@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/certifi/gocertifi"
   packages = ["."]
-  revision = "3fd9e1adb12b72d2f3f82191d49be9b93c69f67c"
-  version = "2017.07.27"
+  revision = "a4ab0227d360091084658029ec8ae45f989fba3e"
+  version = "2017.11.05"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -16,38 +16,20 @@
 [[projects]]
   name = "github.com/evalphobia/logrus_sentry"
   packages = ["."]
-  revision = "9f8f2d05a621e616d9341ac75374eb8402ae0630"
-  version = "v0.4.1"
-
-[[projects]]
-  name = "github.com/fsnotify/fsnotify"
-  packages = ["."]
-  revision = "629574ca2a5df945712d3079857300b5e4da0236"
-  version = "v1.4.2"
+  revision = "13ba9278e2adf1537fd94143a6b6a1c0dc008ac7"
+  version = "v0.4.2"
 
 [[projects]]
   name = "github.com/garyburd/redigo"
   packages = ["internal","redis"]
-  revision = "433969511232c397de61b1442f9fd49ec06ae9ba"
-  version = "v1.1.0"
+  revision = "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/getsentry/raven-go"
   packages = ["."]
-  revision = "d175f85701dfbf44cb0510114c9943e665e60907"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/golang/gddo"
-  packages = ["httputil/header"]
-  revision = "34ff3df85ae83c83da3ea7b1aa09fb5fc843c468"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/hashicorp/hcl"
-  packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
-  revision = "392dba7d905ed5d04a5794ba89f558b27e2ba1ca"
+  revision = "1452f6376ddb15c546b6d7567e1d9518765391b5"
 
 [[projects]]
   branch = "master"
@@ -70,14 +52,8 @@
 [[projects]]
   name = "github.com/labstack/gommon"
   packages = ["color","log"]
-  revision = "779b8a8b9850a97acba6a3fe20feb628c39e17c1"
-  version = "0.2.2"
-
-[[projects]]
-  name = "github.com/magiconair/properties"
-  packages = ["."]
-  revision = "be5ece7dd465ab0765a9682137865547526d1dfb"
-  version = "v1.7.3"
+  revision = "57409ada9da0f2afad6664c49502f8c50fbd8476"
+  version = "0.2.3"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -88,26 +64,8 @@
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/mitchellh/mapstructure"
-  packages = ["."]
-  revision = "d0303fe809921458f417bcf828397a65db30a7e4"
-
-[[projects]]
-  name = "github.com/pelletier/go-buffruneio"
-  packages = ["."]
-  revision = "c37440a7cf42ac63b919c752ca73a85067e05992"
-  version = "v0.2.0"
-
-[[projects]]
-  name = "github.com/pelletier/go-toml"
-  packages = ["."]
-  revision = "5ccdfb18c776b740aecaf085c4d9a2779199c279"
-  version = "v1.0.0"
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -129,51 +87,27 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/spf13/afero"
-  packages = [".","mem"]
-  revision = "9be650865eab0c12963d8753212f4f9c66cdcf12"
-
-[[projects]]
-  name = "github.com/spf13/cast"
-  packages = ["."]
-  revision = "acbeb36b902d72a7a4c18e8f3241075e7ab763e4"
-  version = "v1.1.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/spf13/jwalterweatherman"
-  packages = ["."]
-  revision = "0efa5202c04663c757d84f90f5219c1250baf94f"
-
-[[projects]]
-  name = "github.com/spf13/pflag"
-  packages = ["."]
-  revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
-  version = "v1.0.0"
-
-[[projects]]
-  name = "github.com/spf13/viper"
-  packages = ["."]
-  revision = "25b30aa063fc18e48662b86996252eabdcf2f0c7"
-  version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
   name = "github.com/teamwork/httperr"
   packages = ["."]
-  revision = "dd669ddf66f3b4e603468fbfe77411c6985081f6"
+  revision = "99297ee0e2948afdb4c245817b692e74a4d89847"
 
 [[projects]]
   branch = "master"
   name = "github.com/teamwork/log"
   packages = ["."]
-  revision = "bfd674500517977050d3fa4e6b10a496826e3a66"
+  revision = "3f7c9675f66c87b62de071d6d534997af9a50786"
 
 [[projects]]
   branch = "master"
   name = "github.com/teamwork/test"
-  packages = ["diff"]
-  revision = "fe7d3af7b99331ddae4f1a1271e652e7b5b3737f"
+  packages = [".","diff"]
+  revision = "109d4a7e538bd68fe61aadbeac95ef36d59a72b1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/teamwork/utils"
+  packages = ["httputilx/header","sliceutil"]
+  revision = "80cee17504c9ee0061c054a255cd526e4f5f09ff"
 
 [[projects]]
   branch = "master"
@@ -191,19 +125,13 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["acme","acme/autocert","ssh/terminal"]
-  revision = "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
+  revision = "687d4b818545e443c8ba223cbef20b1721afd4db"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "07c182904dbd53199946ba614a412c61d3c548f5"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/text"
-  packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
-  revision = "ac87088df8ef557f1e32cd00ed0b6fbc3f7ddafb"
+  revision = "75813c647272dd855bda156405bf844a5414f5bf"
 
 [[projects]]
   name = "gopkg.in/gemnasium/logrus-graylog-hook.v2"
@@ -211,15 +139,9 @@
   revision = "daf02e0efe6f4dee3f7085184f5d527cf5cf0f6b"
   version = "v2.0.6"
 
-[[projects]]
-  branch = "v2"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d3746ab635fdde4f6b3bc476ea9f4040503f4037bb71b8856885017cb317bc97"
+  inputs-digest = "7b7f754858255f0e70b903c56b296dad72787c74d50d4fd64917fd0d546ea510"
   solver-name = "gps-cdcl"
   solver-version = 1

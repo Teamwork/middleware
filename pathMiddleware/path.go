@@ -1,3 +1,4 @@
+// Package pathMiddleware prevents path traversal attacks.
 package pathMiddleware // import "github.com/teamwork/middleware/pathMiddleware"
 
 import (

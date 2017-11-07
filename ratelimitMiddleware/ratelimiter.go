@@ -1,3 +1,5 @@
+// Package ratelimitMiddleware implements rate limiting of HTTP requests based
+// on IP address.
 package ratelimitMiddleware // import "github.com/teamwork/middleware/ratelimitMiddleware"
 
 import (

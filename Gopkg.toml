@@ -38,9 +38,9 @@
   version = "0.8.0"
 
 [[constraint]]
-  name = "github.com/spf13/viper"
-  version = "1.0.0"
+  branch = "master"
+  name = "github.com/teamwork/log"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/teamwork/log"
+  name = "github.com/teamwork/test"

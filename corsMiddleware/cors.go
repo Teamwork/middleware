@@ -1,3 +1,4 @@
+// Package corsMiddleware implements cross origin resource sharding headers.
 package corsMiddleware // import "github.com/teamwork/middleware/corsMiddleware"
 
 import (
@@ -163,7 +164,7 @@ func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 
-			// Preflight request
+			// Pre-flight request
 			w.Header().Add(HeaderVary, HeaderOrigin)
 			w.Header().Add(HeaderVary, HeaderAccessControlRequestMethod)
 			w.Header().Add(HeaderVary, HeaderAccessControlRequestHeaders)
