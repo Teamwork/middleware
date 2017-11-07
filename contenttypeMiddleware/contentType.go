@@ -28,16 +28,22 @@ const (
 )
 
 // DefaultOptions for the Valid() middleware if options if nil.
-var DefaultOptions = Options{
+var DefaultOptions = &Options{
 	Methods:           []string{http.MethodPost, http.MethodPut, http.MethodDelete},
 	ValidContentTypes: []string{ContentTypeJSON, ContentTypeFormEncoded, ContentTypeFormData},
+}
+
+// JSON are options to allow only JSON for all requests verbs (GET included).
+var JSON = &Options{
+	Methods:           []string{},
+	ValidContentTypes: []string{ContentTypeJSON},
 }
 
 // Validate ensures that the content type header is set and is one of the
 // allowed content types. This ONLY applies to POST, PUT, and DELETE requests.
 func Validate(opts *Options) func(http.Handler) http.Handler {
 	if opts == nil {
-		opts = &DefaultOptions
+		opts = DefaultOptions
 	}
 	if len(opts.ValidContentTypes) == 0 {
 		panic("no valid Content-Type given")

@@ -151,6 +151,28 @@ func TestValidateOptions(t *testing.T) {
 			},
 			http.StatusBadRequest,
 		},
+
+		{
+			&http.Request{
+				Method: http.MethodGet,
+				Header: http.Header{
+					"Content-Type": []string{"woot"},
+				},
+			},
+			JSON,
+			http.StatusBadRequest,
+		},
+
+		{
+			&http.Request{
+				Method: http.MethodGet,
+				Header: http.Header{
+					"Content-Type": []string{"application/json"},
+				},
+			},
+			JSON,
+			http.StatusOK,
+		},
 	}
 
 	for i, tc := range cases {
