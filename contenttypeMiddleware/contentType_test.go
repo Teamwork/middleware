@@ -81,7 +81,8 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{"application/woot"},
 				},
 			},
-			"unknown content type: application/woot; must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
+			"unknown content type: application/woot; " +
+				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
 			http.StatusBadRequest,
 		},
 	}
@@ -89,7 +90,7 @@ func TestValidate(t *testing.T) {
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 			rr := test.HTTP(t, tc.in, Validate(nil)(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("handler"))
+				_, _ = w.Write([]byte("handler"))
 			}))
 
 			if rr.Code != tc.wantCode {
@@ -139,7 +140,7 @@ func TestValidateOptions(t *testing.T) {
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 			rr := test.HTTP(t, tc.in, Validate(tc.opts)(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("handler"))
+				_, _ = w.Write([]byte("handler"))
 			}))
 
 			if rr.Code != tc.wantCode {

@@ -9,7 +9,7 @@ import (
 
 func TestNoCache(t *testing.T) {
 	rr := test.HTTP(t, nil, NoCache(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
+		_, _ = w.Write([]byte("handler"))
 	}))
 
 	if rr.Code != http.StatusOK {
@@ -25,7 +25,7 @@ func TestNoCache(t *testing.T) {
 
 func TestNoStore(t *testing.T) {
 	rr := test.HTTP(t, nil, NoStore(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
+		_, _ = w.Write([]byte("handler"))
 	}))
 
 	if rr.Code != http.StatusOK {
