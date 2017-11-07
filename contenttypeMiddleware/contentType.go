@@ -47,7 +47,7 @@ func Validate(opts *Options) func(http.HandlerFunc) http.HandlerFunc {
 	}
 
 	return func(next http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			if len(opts.Methods) > 0 && !sliceutil.InStringSlice(opts.Methods, r.Method) {
 				next(w, r)
 				return
@@ -71,6 +71,6 @@ func Validate(opts *Options) func(http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = w.Write([]byte(fmt.Sprintf("unknown content type: %v; must be one of %v",
 				ct, strings.Join(opts.ValidContentTypes, ", "))))
-		})
+		}
 	}
 }
