@@ -35,7 +35,7 @@ var DefaultOptions = Options{
 
 // Validate ensures that the content type header is set and is one of the
 // allowed content types. This ONLY applies to POST, PUT, and DELETE requests.
-func Validate(opts *Options) func(http.HandlerFunc) http.HandlerFunc {
+func Validate(opts *Options) func(http.Handler) http.Handler {
 	if opts == nil {
 		opts = &DefaultOptions
 	}
@@ -46,10 +46,10 @@ func Validate(opts *Options) func(http.HandlerFunc) http.HandlerFunc {
 		opts.Methods[i] = strings.ToUpper(opts.Methods[i])
 	}
 
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if len(opts.Methods) > 0 && !sliceutil.InStringSlice(opts.Methods, r.Method) {
-				next(w, r)
+				next.ServeHTTP(w, r)
 				return
 			}
 
@@ -63,7 +63,7 @@ func Validate(opts *Options) func(http.HandlerFunc) http.HandlerFunc {
 
 			for _, valid := range opts.ValidContentTypes {
 				if strings.Contains(ct, valid) {
-					next(w, r)
+					next.ServeHTTP(w, r)
 					return
 				}
 			}
@@ -71,6 +71,6 @@ func Validate(opts *Options) func(http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = w.Write([]byte(fmt.Sprintf("unknown content type: %v; must be one of %v",
 				ct, strings.Join(opts.ValidContentTypes, ", "))))
-		}
+		})
 	}
 }

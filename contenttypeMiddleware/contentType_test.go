@@ -8,6 +8,13 @@ import (
 	"github.com/teamwork/test"
 )
 
+type handle struct{}
+
+func (h handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte("handler"))
+
+}
+
 func TestValidate(t *testing.T) {
 	cases := []struct {
 		in       *http.Request
@@ -89,9 +96,7 @@ func TestValidate(t *testing.T) {
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, tc.in, Validate(nil)(func(w http.ResponseWriter, r *http.Request) {
-				_, _ = w.Write([]byte("handler"))
-			}))
+			rr := test.HTTP(t, tc.in, Validate(nil)(handle{}).ServeHTTP)
 
 			if rr.Code != tc.wantCode {
 				t.Errorf("want code %v, got %v", tc.wantCode, rr.Code)
@@ -139,9 +144,7 @@ func TestValidateOptions(t *testing.T) {
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, tc.in, Validate(tc.opts)(func(w http.ResponseWriter, r *http.Request) {
-				_, _ = w.Write([]byte("handler"))
-			}))
+			rr := test.HTTP(t, tc.in, Validate(tc.opts)(handle{}).ServeHTTP)
 
 			if rr.Code != tc.wantCode {
 				t.Errorf("want code %v, got %v", tc.wantCode, rr.Code)
