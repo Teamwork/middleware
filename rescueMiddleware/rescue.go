@@ -6,12 +6,9 @@ package rescueMiddleware // import "github.com/teamwork/middleware/rescueMiddlew
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"runtime/debug"
 
 	"github.com/kr/pretty"
-	"github.com/spf13/viper"
 
 	"github.com/teamwork/log"
 )
@@ -48,15 +45,16 @@ func Handle(extraFields func(*log.Entry) *log.Entry) func(f http.HandlerFunc) ht
 
 					switch {
 					// Show panic in browser on dev.
-					case viper.GetBool("dev.enabled"):
-						if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
-							w.Write([]byte(err.Error())) // nolint: errcheck
-							return
-						}
+					// TODO: Add option for this.
+					//case viper.GetBool("dev.enabled"):
+					//	if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+					//		w.Write([]byte(err.Error())) // nolint: errcheck
+					//		return
+					//	}
 
-						// nolint: errcheck
-						w.Write([]byte(fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
-							err, debug.Stack())))
+					//	// nolint: errcheck
+					//	w.Write([]byte(fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
+					//		err, debug.Stack())))
 
 					// JSON response for AJAX.
 					case r.Header.Get("X-Requested-With") == "XMLHttpRequest":

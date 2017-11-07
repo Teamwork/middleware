@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/golang/gddo/httputil/header"
 	"github.com/labstack/echo"
+	"github.com/teamwork/utils/httputilx/header"
 
 	"github.com/teamwork/httperr"
 	"github.com/teamwork/log"
