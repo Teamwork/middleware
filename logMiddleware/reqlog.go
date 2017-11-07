@@ -1,3 +1,4 @@
+// Package logMiddleware adds request logs.
 package logMiddleware // import "github.com/teamwork/middleware/logMiddleware"
 
 import (

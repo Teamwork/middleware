@@ -1,3 +1,4 @@
+// Package httperrMiddleware shows HTTP errors for return codes.
 package httperrMiddleware // import "github.com/teamwork/middleware/httperrMiddleware"
 
 import (
