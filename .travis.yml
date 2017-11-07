@@ -1,25 +1,16 @@
 language: go
 go:
-  - 1.8.x
-
+  - 1.9.x
+go_import_path: github.com/teamwork/middleware
+notifications:
+  email: false
 cache:
   directories:
     - $HOME/gopath/pkg
-
-notifications:
-  webhooks: http://twbot-180547646.us-east-1.elb.amazonaws.com:8182/travis/buildstatus
-  email: false
-
 install:
-  - mv $HOME/gopath/src/github.com/Teamwork $HOME/gopath/src/github.com/teamwork
-  - go get -u github.com/golang/dep/cmd/dep
-  - cd $HOME/gopath/src/github.com/teamwork/middleware
-  - dep ensure
-  - go get -u gopkg.in/alecthomas/gometalinter.v1 && gometalinter.v1 --install
-
+  - ./bin/setup-travis
 script:
   - cd $HOME/gopath/src/github.com/teamwork/middleware
-
-  - go test $(go list ./... | grep -v /vendor/) -race
-  - gometalinter.v1 --config .linter_test.json
-  - gometalinter.v1 --config .linter.json
+  - ./bin/test
+  - ./bin/coverage
+  - ./bin/lint

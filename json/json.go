@@ -11,7 +11,7 @@ func Require(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if ct, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type")); ct != "application/json" {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
-			w.Write([]byte("Content-Type must be application/json"))
+			w.Write([]byte("Content-Type must be application/json")) // nolint: errcheck
 			return
 		}
 

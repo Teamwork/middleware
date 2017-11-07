@@ -25,7 +25,7 @@ func Validate(f http.HandlerFunc) http.HandlerFunc {
 		ct, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
 		if ct == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("invalid content type"))
+			w.Write([]byte("invalid content type")) // nolint: errcheck
 			return
 		}
 
@@ -37,6 +37,6 @@ func Validate(f http.HandlerFunc) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("invalid content type"))
+		w.Write([]byte("invalid content type")) // nolint: errcheck
 	}
 }

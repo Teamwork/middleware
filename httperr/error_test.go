@@ -156,8 +156,16 @@ func TestHTTPErrorHandler(t *testing.T) {
 				if res.StatusCode != test.status {
 					t.Errorf("Unexpected status: %d %s", res.StatusCode, res.Status)
 				}
-				resBody, _ := ioutil.ReadAll(res.Body)
-				res.Body.Close()
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				err = res.Body.Close()
+				if err != nil {
+					t.Fatal(err)
+				}
+
 				if d := diff.TextDiff(test.expected, string(resBody)); d != "" {
 					t.Error(d)
 				}
