@@ -1,4 +1,4 @@
-package httperr // import "github.com/teamwork/middleware/httperr"
+package httperrMiddleware // import "github.com/teamwork/middleware/httperrMiddleware"
 
 import (
 	"errors"

@@ -1,4 +1,4 @@
-package cors // import "github.com/teamwork/middleware/cors"
+package corsMiddleware // import "github.com/teamwork/middleware/corsMiddleware"
 
 import (
 	"net/http"
