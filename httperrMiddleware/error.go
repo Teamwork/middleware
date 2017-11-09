@@ -7,10 +7,10 @@ import (
 	"sort"
 
 	"github.com/labstack/echo"
-	"github.com/teamwork/utils/httputilx/header"
 
 	"github.com/teamwork/httperr"
 	"github.com/teamwork/log"
+	"github.com/teamwork/utils/httputilx/header"
 )
 
 const (
@@ -41,7 +41,7 @@ func errType(req *http.Request, res http.ResponseWriter) string {
 // ErrorHandler handles any errors that propogate back to the top level. It logs
 // them, and presents an error page to the visitor.
 func ErrorHandler(err error, c echo.Context) {
-	code, msg := codeAndMessage(err)
+	code, msg := CodeAndMessage(err)
 
 	if !c.Response().Committed {
 		if c.Request().Method == echo.HEAD { // Issue #608
@@ -67,8 +67,8 @@ func ErrorHandler(err error, c echo.Context) {
 	}
 }
 
-// codeAndMessage extracts the HTTP status code and message from an error.
-func codeAndMessage(err error) (statusCode int, msg string) {
+// CodeAndMessage extracts the HTTP status code and message from an error.
+func CodeAndMessage(err error) (statusCode int, msg string) {
 	var message string
 	if he, ok := err.(*echo.HTTPError); ok {
 		statusCode = he.Code
