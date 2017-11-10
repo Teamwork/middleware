@@ -6,7 +6,9 @@ package rescueMiddleware // import "github.com/teamwork/middleware/rescueMiddlew
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/kr/pretty"
 
@@ -18,9 +20,9 @@ import (
 //
 // The extraFields callback can be used to add extra fields to the log (such as
 // perhaps a installation ID or user ID from the session).
-func Handle(extraFields func(*log.Entry) *log.Entry) func(f http.HandlerFunc) http.HandlerFunc {
-	return func(f http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+func Handle(extraFields func(*log.Entry) *log.Entry, dev bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			l := log.Module("panic handler")
 			defer func() {
 				if rec := recover(); r != nil {
@@ -45,16 +47,15 @@ func Handle(extraFields func(*log.Entry) *log.Entry) func(f http.HandlerFunc) ht
 
 					switch {
 					// Show panic in browser on dev.
-					// TODO: Add option for this.
-					//case viper.GetBool("dev.enabled"):
-					//	if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
-					//		w.Write([]byte(err.Error())) // nolint: errcheck
-					//		return
-					//	}
+					case dev:
+						if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+							w.Write([]byte(err.Error())) // nolint: errcheck
+							return
+						}
 
-					//	// nolint: errcheck
-					//	w.Write([]byte(fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
-					//		err, debug.Stack())))
+						// nolint: errcheck
+						w.Write([]byte(fmt.Sprintf("<h2>%v</h2><pre>%s</pre>",
+							err, debug.Stack())))
 
 					// JSON response for AJAX.
 					case r.Header.Get("X-Requested-With") == "XMLHttpRequest":
@@ -73,7 +74,7 @@ func Handle(extraFields func(*log.Entry) *log.Entry) func(f http.HandlerFunc) ht
 				}
 			}()
 
-			f(w, r)
-		}
+			next.ServeHTTP(w, r)
+		})
 	}
 }
