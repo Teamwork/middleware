@@ -58,6 +58,7 @@ func BlockDotfiles(next http.Handler) http.Handler {
 				log.Printf("blocked access to pathname starting with dot: %v",
 					r.URL.Path)
 				w.WriteHeader(http.StatusNotFound)
+				return
 			}
 		}
 

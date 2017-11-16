@@ -40,6 +40,9 @@ func TestBlockTraversal(t *testing.T) {
 			if rr.Code != tc.wantCode {
 				t.Errorf("\nout:  %#v\nwant: %#v\n", rr.Code, tc.wantCode)
 			}
+			if rr.Code != 200 && rr.Body.String() != "" {
+				t.Errorf("expected body to be empty: %#v", rr.Body.String())
+			}
 		})
 	}
 }
@@ -69,6 +72,9 @@ func TestBlockDotfiles(t *testing.T) {
 			rr := test.HTTP(t, req, BlockDotfiles(handle{}).ServeHTTP)
 			if rr.Code != tc.wantCode {
 				t.Errorf("\nout:  %#v\nwant: %#v\n", rr.Code, tc.wantCode)
+			}
+			if rr.Code != 200 && rr.Body.String() != "" {
+				t.Errorf("expected body to be empty: %#v", rr.Body.String())
 			}
 		})
 	}
