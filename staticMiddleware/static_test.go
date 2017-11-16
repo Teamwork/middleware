@@ -21,6 +21,8 @@ func TestBlockTraversal(t *testing.T) {
 		wantCode      int
 	}{
 		{"/root", "/some/path", 200},
+		{"/root", "/some/path.ext", 200},
+		{"/root", "/some/../path..ext", 200},
 		{"/root", "/some/../path", 200},
 		{"/root", "/some/../../path", 403},
 		{"/root", "/some/./././path", 200},
@@ -48,6 +50,8 @@ func TestBlockDotfiles(t *testing.T) {
 		wantCode int
 	}{
 		{"/some/path", 200},
+		{"/some/path.", 200},
+		{"/some/path.ext", 200},
 		{"/some/../../path", 200},
 		{"/some/./path", 200},
 		{"/some/path/.hidden", 404},
