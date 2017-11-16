@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/labstack/echo"
 )
 
 // Config defines the config for Security middleware.
@@ -103,14 +101,14 @@ var DefaultConfig = Config{
 }
 
 // Add sets several security-related headers.
-func Add(rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
+func Add(rootDomain string) func(http.Handler) http.Handler {
 	return WithConfig(DefaultConfig, rootDomain)
 }
 
 // WithConfig returns a Security middleware from config.
-func WithConfig(config Config, rootDomain string) func(f http.HandlerFunc) http.HandlerFunc {
-	return func(f http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+func WithConfig(config Config, rootDomain string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			csp := ""
 			for k, v := range config.ContentSecurityPolicy {
@@ -123,26 +121,23 @@ func WithConfig(config Config, rootDomain string) func(f http.HandlerFunc) http.
 			}
 
 			if config.XFrameOptions != "" {
-				w.Header().Set(echo.HeaderXFrameOptions,
-					config.XFrameOptions)
+				w.Header().Set("X-Frame-Options", config.XFrameOptions)
 			}
 			if csp != "" {
-				w.Header().Set(echo.HeaderContentSecurityPolicy, csp)
+				w.Header().Set("Content-Security-Policy", csp)
 			}
 			if cspReport != "" {
 				w.Header().Set("Content-Security-Policy-Report-Only", cspReport)
 			}
 			if config.StrictTransportSecurity != "" &&
 				strings.HasSuffix(r.Host, rootDomain) {
-				w.Header().Set(echo.HeaderStrictTransportSecurity,
-					config.StrictTransportSecurity)
+				w.Header().Set("Strict-Transport-Security", config.StrictTransportSecurity)
 			}
 			if config.XContentTypeOptions != "" {
-				w.Header().Set(echo.HeaderXContentTypeOptions,
-					config.XContentTypeOptions)
+				w.Header().Set("X-Content-Type-Options", config.XContentTypeOptions)
 			}
 
-			f(w, r)
-		}
+			next.ServeHTTP(w, r)
+		})
 	}
 }

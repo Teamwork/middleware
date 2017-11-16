@@ -36,9 +36,9 @@ type rateLimiter struct {
 }
 
 // Limit limits API requests based on the IP address
-func Limit(p *redis.Pool) func(f http.HandlerFunc) http.HandlerFunc {
-	return func(f http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+func Limit(p *redis.Pool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rateLimit := newRateLimiter(getKey(r), p)
 			w.Header().Add("X-Rate-Limit-Limit", strconv.FormatInt(rateLimit.Limit, 10))
 			w.Header().Add("X-Rate-Limit-Remaining", strconv.FormatInt(rateLimit.Remaining, 10))
@@ -49,8 +49,8 @@ func Limit(p *redis.Pool) func(f http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 
-			f(w, r)
-		}
+			next.ServeHTTP(w, r)
+		})
 	}
 }
 

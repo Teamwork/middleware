@@ -114,15 +114,15 @@ var (
 
 // Add returns a Cross-Origin Resource Sharing (CORS) middleware.
 // See https://developer.mozilla.org/en/docs/Web/HTTP/Access_control_CORS
-func Add(f http.HandlerFunc) http.HandlerFunc {
-	return WithConfig(DefaultConfig)(f)
+func Add(next http.Handler) http.Handler {
+	return WithConfig(DefaultConfig)(next)
 }
 
 // WithConfig returns a CORS middleware from config.
 // See `CORS()`.
-func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
-	return func(f http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+func WithConfig(config Config) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Defaults
 			if len(config.AllowOrigins) == 0 {
 				config.AllowOrigins = DefaultConfig.AllowOrigins
@@ -150,7 +150,7 @@ func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
 			if r.Method != OPTIONS {
 				w.Header().Add(HeaderVary, HeaderOrigin)
 				if origin == "" || allowedOrigin == "" {
-					f(w, r)
+					next.ServeHTTP(w, r)
 					return
 				}
 				w.Header().Set(HeaderAccessControlAllowOrigin, allowedOrigin)
@@ -160,7 +160,7 @@ func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
 				if exposeHeaders != "" {
 					w.Header().Set(HeaderAccessControlExposeHeaders, exposeHeaders)
 				}
-				f(w, r)
+				next.ServeHTTP(w, r)
 				return
 			}
 
@@ -169,7 +169,7 @@ func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
 			w.Header().Add(HeaderVary, HeaderAccessControlRequestMethod)
 			w.Header().Add(HeaderVary, HeaderAccessControlRequestHeaders)
 			if origin == "" || allowedOrigin == "" {
-				f(w, r)
+				next.ServeHTTP(w, r)
 				return
 			}
 			w.Header().Set(HeaderAccessControlAllowOrigin, allowedOrigin)
@@ -191,6 +191,6 @@ func WithConfig(config Config) func(f http.HandlerFunc) http.HandlerFunc {
 
 			w.WriteHeader(http.StatusNoContent)
 			return
-		}
+		})
 	}
 }

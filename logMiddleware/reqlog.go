@@ -11,9 +11,9 @@ import (
 )
 
 // Log requests to stdout. This is mainly intended for dev-env.
-func Log(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		f(w, r)
+func Log(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
 
 		// Don't log health requests since there are so many!
 		if r.RequestURI == "/health.json" {
@@ -41,5 +41,5 @@ func Log(f http.HandlerFunc) http.HandlerFunc {
 			r.RequestURI)
 
 		return
-	}
+	})
 }
