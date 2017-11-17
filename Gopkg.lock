@@ -8,6 +8,12 @@
   version = "2017.11.05"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/evalphobia/logrus_sentry"
   packages = ["."]
   revision = "13ba9278e2adf1537fd94143a6b6a1c0dc008ac7"
@@ -44,6 +50,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
@@ -58,13 +70,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/teamwork/test"
-  packages = ["."]
+  packages = [".","diff"]
   revision = "109d4a7e538bd68fe61aadbeac95ef36d59a72b1"
 
 [[projects]]
   branch = "master"
   name = "github.com/teamwork/utils"
-  packages = ["sliceutil"]
+  packages = ["httputilx","ioutilx","sliceutil"]
   revision = "80cee17504c9ee0061c054a255cd526e4f5f09ff"
 
 [[projects]]
@@ -88,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "05f0bae7a0058d87e1eb41a3e18eeaebd7ca388c5f54090506a9c07a85a4df7e"
+  inputs-digest = "dc9a8078fcd218b9108e1f0ee8f21027cd8f4ee775c8746978e51a10d017cee1"
   solver-name = "gps-cdcl"
   solver-version = 1
