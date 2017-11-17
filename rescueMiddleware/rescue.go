@@ -19,7 +19,7 @@ import (
 //
 // The extraFields callback can be used to add extra fields to the log (such as
 // perhaps a installation ID or user ID from the session).
-func Rescue(extraFields func(*log.Entry) *log.Entry, dev bool) func(http.Handler) http.Handler {
+func Rescue(extraFields func(*http.Request, *log.Entry) *log.Entry, dev bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			l := log.Module("panic handler")
@@ -40,7 +40,7 @@ func Rescue(extraFields func(*log.Entry) *log.Entry, dev bool) func(http.Handler
 				}
 
 				if extraFields != nil {
-					l = extraFields(l)
+					l = extraFields(r, l)
 				}
 
 				// Report to Sentry.
