@@ -8,12 +8,6 @@
   version = "2017.11.05"
 
 [[projects]]
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
-
-[[projects]]
   name = "github.com/evalphobia/logrus_sentry"
   packages = ["."]
   revision = "13ba9278e2adf1537fd94143a6b6a1c0dc008ac7"
@@ -44,52 +38,16 @@
   revision = "7cafcd837844e784b526369c9bce262804aebc60"
 
 [[projects]]
-  name = "github.com/labstack/echo"
-  packages = ["."]
-  revision = "cec7629194fe4bf83b0c72d9a02d340c7a1468ac"
-  version = "3.2.3"
-
-[[projects]]
-  name = "github.com/labstack/gommon"
-  packages = ["color","log"]
-  revision = "57409ada9da0f2afad6664c49502f8c50fbd8476"
-  version = "0.2.3"
-
-[[projects]]
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
-
-[[projects]]
-  name = "github.com/mattn/go-isatty"
-  packages = ["."]
-  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
-  version = "v0.0.3"
-
-[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
-
-[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
   version = "v1.0.3"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/teamwork/httperr"
-  packages = ["."]
-  revision = "99297ee0e2948afdb4c245817b692e74a4d89847"
 
 [[projects]]
   branch = "master"
@@ -100,31 +58,19 @@
 [[projects]]
   branch = "master"
   name = "github.com/teamwork/test"
-  packages = [".","diff"]
+  packages = ["."]
   revision = "109d4a7e538bd68fe61aadbeac95ef36d59a72b1"
 
 [[projects]]
   branch = "master"
   name = "github.com/teamwork/utils"
-  packages = ["httputilx/header","sliceutil"]
+  packages = ["sliceutil"]
   revision = "80cee17504c9ee0061c054a255cd526e4f5f09ff"
 
 [[projects]]
   branch = "master"
-  name = "github.com/valyala/bytebufferpool"
-  packages = ["."]
-  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/valyala/fasttemplate"
-  packages = ["."]
-  revision = "dcecefd839c4193db0d35b88ec65b4c12d360ab0"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["acme","acme/autocert","ssh/terminal"]
+  packages = ["ssh/terminal"]
   revision = "687d4b818545e443c8ba223cbef20b1721afd4db"
 
 [[projects]]
@@ -142,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7b7f754858255f0e70b903c56b296dad72787c74d50d4fd64917fd0d546ea510"
+  inputs-digest = "05f0bae7a0058d87e1eb41a3e18eeaebd7ca388c5f54090506a9c07a85a4df7e"
   solver-name = "gps-cdcl"
   solver-version = 1
