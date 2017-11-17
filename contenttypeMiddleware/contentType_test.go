@@ -151,7 +151,6 @@ func TestValidateOptions(t *testing.T) {
 			},
 			http.StatusBadRequest,
 		},
-
 		{
 			&http.Request{
 				Method: http.MethodGet,
@@ -162,7 +161,6 @@ func TestValidateOptions(t *testing.T) {
 			JSON,
 			http.StatusBadRequest,
 		},
-
 		{
 			&http.Request{
 				Method: http.MethodGet,
@@ -171,6 +169,18 @@ func TestValidateOptions(t *testing.T) {
 				},
 			},
 			JSON,
+			http.StatusOK,
+		},
+		{
+			&http.Request{
+				Method: http.MethodPost,
+				Header: http.Header{},
+			},
+			&Options{
+				Methods:           []string{http.MethodPost, http.MethodPut, http.MethodDelete},
+				ValidContentTypes: []string{ContentTypeJSON, ContentTypeFormEncoded, ContentTypeFormData},
+				AllowEmpty:        true,
+			},
 			http.StatusOK,
 		},
 	}
