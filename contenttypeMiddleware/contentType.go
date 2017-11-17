@@ -18,6 +18,9 @@ type Options struct {
 
 	// List of valid content-types.
 	ValidContentTypes []string
+
+	// AllowEmpty indicates if not sending a Content-Type header is allowed.
+	AllowEmpty bool
 }
 
 // Some commonly used Content-Type values.
@@ -31,12 +34,14 @@ const (
 var DefaultOptions = &Options{
 	Methods:           []string{http.MethodPost, http.MethodPut, http.MethodDelete},
 	ValidContentTypes: []string{ContentTypeJSON, ContentTypeFormEncoded, ContentTypeFormData},
+	AllowEmpty:        false,
 }
 
 // JSON are options to allow only JSON for all requests verbs (GET included).
 var JSON = &Options{
 	Methods:           []string{},
 	ValidContentTypes: []string{ContentTypeJSON},
+	AllowEmpty:        false,
 }
 
 // Validate ensures that the content type header is set and is one of the
@@ -55,6 +60,11 @@ func Validate(opts *Options) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if len(opts.Methods) > 0 && !sliceutil.InStringSlice(opts.Methods, r.Method) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			if opts.AllowEmpty && r.Header.Get("Content-Type") == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
