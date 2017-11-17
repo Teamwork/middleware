@@ -1,4 +1,5 @@
-package auditMiddleware
+// Package auditMiddleware adds audit logs.
+package auditMiddleware // import "github.com/teamwork/middleware/auditMiddleware"
 
 import (
 	"database/sql/driver"
