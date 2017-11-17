@@ -1,6 +1,7 @@
 package httperrMiddleware // import "github.com/teamwork/middleware/httperrMiddleware"
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -8,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/labstack/echo"
-
-	"github.com/teamwork/test/diff"
 )
 
 func TestErrType(t *testing.T) {
@@ -88,15 +87,22 @@ func TestErrType(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		func(test typeTest) {
-			t.Run(test.name, func(t *testing.T) {
-				result := errType(test.req, test.res)
-				if result != test.expected {
-					t.Errorf("Unexpected result: %s", result)
-				}
-			})
-		}(test)
+		t.Run(test.name, func(t *testing.T) {
+			result := errType(test.req, test.res)
+			if result != test.expected {
+				t.Errorf("Unexpected result: %s", result)
+			}
+		})
 	}
+}
+
+type warning struct{}
+
+func (w warning) Error() string {
+	return "oh noes"
+}
+func (w warning) IsWarning() bool {
+	return true
 }
 
 func TestHTTPErrorHandler(t *testing.T) {
@@ -142,34 +148,53 @@ func TestHTTPErrorHandler(t *testing.T) {
 			status:   500,
 			expected: "standard error",
 		},
+		{
+			name:     "Warning",
+			req:      httptest.NewRequest("GET", "/", nil),
+			err:      warning{},
+			status:   500,
+			expected: `{"errors":["oh noes"],"status":"error"}`,
+		},
+		{
+			name:     "warning",
+			req:      httptest.NewRequest("GET", "/", nil),
+			err:      context.DeadlineExceeded,
+			status:   504,
+			expected: `{"errors":["Sorry, something is taking too long. Please try again"],"status":"error"}`,
+		},
+		{
+			name:     "warning",
+			req:      httptest.NewRequest("GET", "/", nil),
+			err:      &echo.HTTPError{Code: 502, Message: "woot"},
+			status:   502,
+			expected: `{"errors":["woot"],"status":"error"}`,
+		},
 	}
 	for _, test := range tests {
-		func(test errTest) {
-			t.Run(test.name, func(t *testing.T) {
-				w := test.res
-				if w == nil {
-					w = httptest.NewRecorder()
-				}
-				c := echo.New().NewContext(test.req, w)
-				ErrorHandler(test.err, c)
-				res := w.Result()
-				if res.StatusCode != test.status {
-					t.Errorf("Unexpected status: %d %s", res.StatusCode, res.Status)
-				}
-				resBody, err := ioutil.ReadAll(res.Body)
-				if err != nil {
-					t.Fatal(err)
-				}
+		t.Run(test.name, func(t *testing.T) {
+			w := test.res
+			if w == nil {
+				w = httptest.NewRecorder()
+			}
+			c := echo.New().NewContext(test.req, w)
+			ErrorHandler(test.err, c)
+			res := w.Result()
+			if res.StatusCode != test.status {
+				t.Errorf("Unexpected status: %d %s", res.StatusCode, res.Status)
+			}
+			resBody, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				err = res.Body.Close()
-				if err != nil {
-					t.Fatal(err)
-				}
+			err = res.Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				if d := diff.TextDiff(test.expected, string(resBody)); d != "" {
-					t.Error(d)
-				}
-			})
-		}(test)
+			if test.expected != string(resBody) {
+				t.Errorf("\ngot:  %v\nwant: %v\n", string(resBody), test.expected)
+			}
+		})
 	}
 }
