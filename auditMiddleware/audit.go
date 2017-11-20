@@ -192,7 +192,7 @@ func Middleware(opts Options, r *http.Request) {
 
 	if !opts.SkipRequestBody {
 		body, err := httputilx.DumpBody(r, opts.MaxSize)
-		if err != nil && err != io.EOF {
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			opts.Auditor.Log(r, errors.Wrap(err, "could not read body"))
 		}
 		a.RequestBody = body
