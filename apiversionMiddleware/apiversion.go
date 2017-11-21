@@ -2,18 +2,23 @@ package apiversionMiddleware // import "github.com/teamwork/middleware/apiversio
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"net/http"
 )
 
-// APIVersion adds region, git commit & beta/prod to the server response
-func APIVersion(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// output server header (example format US BETA 6ba849de1881e0d859a45714462ccb6d5ee9f015)
-		// SERVICE_TARGET is PROD or BETA (set in travis env vars)
-		apiVersion := fmt.Sprintf("%s %s %s", viper.GetString("AWS_REGION"),
-			viper.GetString("SERVICE_TARGET"), viper.GetString("VERSION"))
-		w.Header().Set("Api-Version", apiVersion)
-		f(w, r)
+// Config are server information fields
+type Config struct {
+	AWSRegion string
+	Env       string
+	Version   string
+}
+
+// WithConfig adds region, git commit & beta/prod to the server response
+func WithConfig(c Config) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("API-Version", fmt.Sprintf("region: '%s' env: '%s' version: '%s'", c.AWSRegion, c.Env, c.Version))
+			next.ServeHTTP(w, r)
+			return
+		})
 	}
 }
