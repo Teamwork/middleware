@@ -36,7 +36,7 @@ type rateLimiter struct {
 // Limit limits API requests based on the IP address.
 // getKey is a function that generates bucket keys.
 // If ignore function returns true, rate limit is bypassed.
-func Limit(p *redis.Pool, getKey func(req *http.Request), ignore func(req *http.Request) bool) func(http.Handler) http.Handler {
+func Limit(p *redis.Pool, getKey func(req *http.Request) string, ignore func(req *http.Request) bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if ignore(r) {
