@@ -4,15 +4,14 @@ package ratelimitMiddleware // import "github.com/teamwork/middleware/ratelimitM
 
 import (
 	"fmt"
-	"hash/fnv"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
 	"github.com/teamwork/log"
+	"github.com/tomasen/realip"
 )
 
 const (
@@ -35,10 +34,17 @@ type rateLimiter struct {
 	tracker *redis.Pool
 }
 
-// Limit limits API requests based on the IP address
-func Limit(p *redis.Pool) func(http.Handler) http.Handler {
+// Limit limits API requests based on the IP address. It uses prefix string
+// as key prefix in Redis.
+// If ignore function returns true, rate limit is bypassed.
+func Limit(p *redis.Pool, prefix string, ignore func(req *http.Request) bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if ignore(r) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			rateLimit := newRateLimiter(getKey(r), p)
 			w.Header().Add("X-Rate-Limit-Limit", strconv.FormatInt(rateLimit.Limit, 10))
 			w.Header().Add("X-Rate-Limit-Remaining", strconv.FormatInt(rateLimit.Remaining, 10))
@@ -54,21 +60,13 @@ func Limit(p *redis.Pool) func(http.Handler) http.Handler {
 	}
 }
 
-func getKey(r *http.Request) string {
-	h := fnv.New32a()
-	u, err := url.Parse(r.RequestURI)
-	if err != nil {
-		h.Write([]byte(r.RequestURI)) // nolint: errcheck
-	} else {
-		h.Write([]byte(u.Host)) // nolint: errcheck
-	}
-
-	return fmt.Sprintf("%v-%v", "", h.Sum32())
+func getKey(r *http.Request, prefix string) string {
+	return fmt.Sprintf("%v-%v", prefix, realip.RealIP(c.Request()))
 }
 
 func newRateLimiter(key string, pool *redis.Pool) rateLimiter {
 	limiter := rateLimiter{
-		key:     fmt.Sprintf("launchpad-rate-limiter-%s", key),
+		key:     key,
 		tracker: pool,
 		Limit:   perPeriod,
 		Reset:   periodSeconds,
