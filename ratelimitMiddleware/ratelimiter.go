@@ -11,7 +11,6 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
 	"github.com/teamwork/log"
-	"github.com/tomasen/realip"
 )
 
 const (
@@ -34,10 +33,10 @@ type rateLimiter struct {
 	tracker *redis.Pool
 }
 
-// Limit limits API requests based on the IP address. It uses prefix string
-// as key prefix in Redis.
+// Limit limits API requests based on the IP address.
+// getKey is a function that generates bucket keys.
 // If ignore function returns true, rate limit is bypassed.
-func Limit(p *redis.Pool, prefix string, ignore func(req *http.Request) bool) func(http.Handler) http.Handler {
+func Limit(p *redis.Pool, getKey func(req *http.Request), ignore func(req *http.Request) bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if ignore(r) {
@@ -58,10 +57,6 @@ func Limit(p *redis.Pool, prefix string, ignore func(req *http.Request) bool) fu
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-func getKey(r *http.Request, prefix string) string {
-	return fmt.Sprintf("%v-%v", prefix, realip.RealIP(c.Request()))
 }
 
 func newRateLimiter(key string, pool *redis.Pool) rateLimiter {
