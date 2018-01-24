@@ -26,11 +26,6 @@ var (
 	periodSeconds = 60
 )
 
-type rateLimiter struct {
-	key     string
-	tracker *redis.Pool
-}
-
 // GetKeyFunc is a function that generates bucket keys.
 type GetKeyFunc func(req *http.Request) string
 
@@ -65,7 +60,7 @@ func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Ha
 			w.Header().Add("X-Rate-Limit-Remaining", strconv.Itoa(remaining))
 			w.Header().Add("X-Rate-Limit-Reset", strconv.Itoa(periodSeconds))
 
-			if granted == false {
+			if !granted {
 				w.WriteHeader(http.StatusTooManyRequests)
 				return
 			}

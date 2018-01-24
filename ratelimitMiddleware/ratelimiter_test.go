@@ -89,9 +89,10 @@ func TestRateLimit(t *testing.T) {
 
 func TestGrant(t *testing.T) {
 	conn := redigomock.NewConn()
-	mockRedisPool := redis.NewPool(func() (redis.Conn, error) {
-		return conn, nil
-	}, 10)
+
+	mockRedisPool := &redis.Pool{
+		Dial: func() (redis.Conn, error) { return conn, nil },
+	}
 
 	oldNow := now
 	defer func() {
