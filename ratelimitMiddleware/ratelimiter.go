@@ -1,5 +1,4 @@
-// Package ratelimitMiddleware implements rate limiting of HTTP requests based
-// on IP address.
+// Package ratelimitMiddleware implements rate limiting of HTTP requests.
 package ratelimitMiddleware // import "github.com/teamwork/middleware/ratelimitMiddleware"
 
 import (
@@ -10,7 +9,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
-	"github.com/teamwork/log"
+	"github.com/tomasen/realip"
 )
 
 const (
@@ -33,10 +32,21 @@ type rateLimiter struct {
 	tracker *redis.Pool
 }
 
-// Limit limits API requests based on the IP address.
-// getKey is a function that generates bucket keys.
+// GetKeyFunc is a function that generates bucket keys.
+type GetKeyFunc func(req *http.Request) string
+
+// IgnoreFunc determines when rate limit verification should be ignored.
+type IgnoreFunc func(req *http.Request) bool
+
+// IPBucket is a generator of rate limit buckets based on
+// client's IP address
+func IPBucket(prefix string, req *http.Request) string {
+	return fmt.Sprintf("%s-%s", prefix, realip.RealIP(req))
+}
+
+// Limit limits requests for a key provided by getKey function.
 // If ignore function returns true, rate limit is bypassed.
-func Limit(p *redis.Pool, getKey func(req *http.Request) string, ignore func(req *http.Request) bool) func(http.Handler) http.Handler {
+func Limit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if ignore(r) {
@@ -49,6 +59,14 @@ func Limit(p *redis.Pool, getKey func(req *http.Request) string, ignore func(req
 			w.Header().Add("X-Rate-Limit-Remaining", strconv.FormatInt(rateLimit.Remaining, 10))
 			w.Header().Add("X-Rate-Limit-Reset", strconv.FormatInt(rateLimit.Reset, 10))
 
+			err := rateLimit.appendRequest()
+			if err != nil {
+				// maybe a redis error at this point
+				// should we block this request?
+				w.WriteHeader(http.StatusTooManyRequests)
+				return
+			}
+
 			if rateLimit.limitIsReached() {
 				w.WriteHeader(http.StatusTooManyRequests)
 				return
@@ -59,17 +77,12 @@ func Limit(p *redis.Pool, getKey func(req *http.Request) string, ignore func(req
 	}
 }
 
-func newRateLimiter(key string, pool *redis.Pool) rateLimiter {
-	limiter := rateLimiter{
+func newRateLimiter(key string, pool *redis.Pool) *rateLimiter {
+	limiter := &rateLimiter{
 		key:     key,
 		tracker: pool,
 		Limit:   perPeriod,
 		Reset:   periodSeconds,
-	}
-
-	err := limiter.appendRequest()
-	if err != nil {
-		log.Error(err, "failed to append request")
 	}
 
 	return limiter
