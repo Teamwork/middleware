@@ -9,6 +9,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
+	"github.com/teamwork/log"
 	"github.com/tomasen/realip"
 )
 
@@ -62,7 +63,7 @@ func Limit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Handle
 			err := rateLimit.appendRequest()
 			if err != nil {
 				// maybe a redis error at this point
-				// should we block this request?
+				log.Error(err, "failed to append request")
 				w.WriteHeader(http.StatusTooManyRequests)
 				return
 			}
@@ -93,7 +94,7 @@ func (rl *rateLimiter) limitIsReached() bool {
 }
 
 func (rl *rateLimiter) appendRequest() error {
-	accessTime := time.Now().UnixNano()
+	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
 		return err
@@ -138,4 +139,9 @@ func (rl *rateLimiter) appendRequest() error {
 	rl.Remaining = rl.Limit - int64(len(keys))
 
 	return nil
+}
+
+// a helper function to make it easier to test
+var now = func() time.Time {
+	return time.Now()
 }
