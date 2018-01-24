@@ -2,14 +2,92 @@ package ratelimitMiddleware
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/rafaeljusto/redigomock"
+	"github.com/teamwork/test"
 )
 
-func TestRateLimiter(t *testing.T) {
+type handle struct{}
+
+func (h handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte("handler"))
+}
+
+func TestRateLimit(t *testing.T) {
+	scenarios := []struct {
+		description  string
+		in           *http.Request
+		getKey       GetKeyFunc
+		ignore       IgnoreFunc
+		grantFunc    func(*redis.Pool, string) (bool, int, error)
+		expectedCode int
+	}{
+		{
+			description: "it should grant access when grant func returns true",
+			in:          &http.Request{RemoteAddr: "127.0.0.1"},
+			ignore: func(req *http.Request) bool {
+				return false
+			},
+			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+				return true, 0, nil
+			},
+			getKey: func(req *http.Request) string {
+				return "test"
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			description: "it should grant access when ignore func returns true",
+			in:          &http.Request{RemoteAddr: "127.0.0.1"},
+			ignore: func(req *http.Request) bool {
+				return true
+			},
+			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+				return false, 0, nil
+			},
+			getKey: func(req *http.Request) string {
+				return "test"
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			description: "it should block access when grant func return false",
+			in:          &http.Request{RemoteAddr: "127.0.0.1"},
+			ignore: func(req *http.Request) bool {
+				return false
+			},
+			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+				return false, 0, nil
+			},
+			getKey: func(req *http.Request) string {
+				return "test"
+			},
+			expectedCode: http.StatusTooManyRequests,
+		},
+	}
+
+	oldGrant := grant
+	defer func() {
+		grant = oldGrant
+	}()
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.description, func(t *testing.T) {
+			grant = scenario.grantFunc
+			handler := RateLimit(nil, scenario.getKey, scenario.ignore)(handle{}).ServeHTTP
+			rr := test.HTTP(t, scenario.in, handler)
+			if rr.Code != scenario.expectedCode {
+				t.Errorf("expected code %d, got %d", scenario.expectedCode, rr.Code)
+			}
+		})
+	}
+}
+
+func TestGrant(t *testing.T) {
 	conn := redigomock.NewConn()
 	mockRedisPool := redis.NewPool(func() (redis.Conn, error) {
 		return conn, nil
@@ -29,19 +107,19 @@ func TestRateLimiter(t *testing.T) {
 
 	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 
-	rl := newRateLimiter("test", mockRedisPool)
-
-	rl.Limit = 2 // decrease limit to make easier to test
+	perPeriod = 2 // decrease limit to make easier to test
 
 	scenarios := []struct {
 		description   string
 		stub          func()
-		reachLimit    bool
+		granted       bool
+		remaining     int
 		expectedError error
 	}{
 		{
 			description:   "it should return error when redis fails",
-			reachLimit:    false,
+			granted:       false,
+			remaining:     0,
 			expectedError: fmt.Errorf("err"),
 			stub: func() {
 				conn.Command("MULTI").ExpectError(fmt.Errorf("err"))
@@ -49,27 +127,39 @@ func TestRateLimiter(t *testing.T) {
 		},
 		{
 			description: "it should grant access when there's just one item on redis set",
-			reachLimit:  false,
+			granted:     true,
+			remaining:   1,
 			stub: func() {
 				unixNano := now().UnixNano()
 				conn.Command("MULTI")
-				conn.Command("ZADD", "test", unixNano, unixNano).Expect(int64(1))
-				conn.Command("ZREMRANGEBYSCORE", "test", 0, unixNano-duration.Nanoseconds()).Expect(int64(1))
-				conn.Command("ZRANGE", "test", 0, -1).Expect(int64(1))
-				conn.Command("EXEC").ExpectSlice([]interface{}{"1"})
+				conn.Command("ZADD", "test", unixNano, unixNano).Expect("QUEUED")
+				conn.Command("ZREMRANGEBYSCORE", "test", 0, unixNano-duration.Nanoseconds()).Expect("QUEUED")
+				conn.Command("ZRANGE", "test", 0, -1).Expect("QUEUED")
+				conn.Command("EXEC").ExpectSlice(
+					1, // result for zadd
+					0, // result for zrem
+					[]interface{}{ // result for zrange
+						[]byte("1"),
+					})
 			},
 		},
 
 		{
-			description: "it should block access when there are too many items on redis set",
-			reachLimit:  true,
+			description: "it should block access when there are more elements in redis than the limit",
+			granted:     false,
+			remaining:   0,
 			stub: func() {
 				unixNano := now().UnixNano()
 				conn.Command("MULTI")
 				conn.Command("ZADD", "test", unixNano, unixNano).Expect(int64(1))
 				conn.Command("ZREMRANGEBYSCORE", "test", 0, unixNano-duration.Nanoseconds()).Expect(int64(1))
 				conn.Command("ZRANGE", "test", 0, -1).Expect(int64(1))
-				conn.Command("EXEC").ExpectSlice([]interface{}{"1", "2"})
+				conn.Command("EXEC").ExpectSlice(
+					1, // result for zadd
+					0, // result for zrem
+					[]interface{}{ // result for zrange
+						[]byte("1"), []byte("2"),
+					})
 			},
 		},
 	}
@@ -79,18 +169,18 @@ func TestRateLimiter(t *testing.T) {
 			conn.Clear()
 			scenario.stub()
 
-			err := rl.appendRequest()
+			granted, remaining, err := grant(mockRedisPool, "test")
 
-			if scenario.expectedError != nil && err == nil {
-				t.Errorf("expecting error")
+			if scenario.expectedError != nil && !test.ErrorContains(err, scenario.expectedError.Error()) {
+				t.Fatalf("wrong error: %v", err)
 			}
 
-			if err != nil {
-				return
+			if remaining != scenario.remaining {
+				t.Fatalf("unexpected remaining result; expect %d got %d", scenario.remaining, remaining)
 			}
 
-			if rl.limitIsReached() != scenario.reachLimit {
-				t.Errorf("unexpected result; expect %t got %t", scenario.reachLimit, rl.limitIsReached())
+			if granted != scenario.granted {
+				t.Errorf("unexpected granted result; expect %t got %t", scenario.granted, granted)
 			}
 		})
 	}
