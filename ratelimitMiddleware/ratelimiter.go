@@ -17,18 +17,16 @@ const (
 	// ErrRateLimit is used when the rate limit is reached and requests are
 	// being throttled.
 	ErrRateLimit = "Rate limit exceeded"
+)
 
+var (
 	// perPeriod is the number of API calls (to all endpoints) that can be made
 	// by the client before receiving a 429 error
-	perPeriod     int64 = 20
-	periodSeconds int64 = 60
+	perPeriod     = 20
+	periodSeconds = 60
 )
 
 type rateLimiter struct {
-	Remaining int64
-	Limit     int64
-	Reset     int64
-
 	key     string
 	tracker *redis.Pool
 }
@@ -41,34 +39,33 @@ type IgnoreFunc func(req *http.Request) bool
 
 // IPBucket is a generator of rate limit buckets based on
 // client's IP address
-func IPBucket(prefix string, req *http.Request) string {
-	return fmt.Sprintf("%s-%s", prefix, realip.RealIP(req))
+func IPBucket(prefix string, req *http.Request) GetKeyFunc {
+	return func(req *http.Request) string {
+		return fmt.Sprintf("%s-%s", prefix, realip.RealIP(req))
+	}
 }
 
-// Limit limits requests for a key provided by getKey function.
+// RateLimit limits requests for a key provided by getKey function.
 // If ignore function returns true, rate limit is bypassed.
-func Limit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Handler) http.Handler {
+func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ignore(r) {
+			if ignore != nil && ignore(r) {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			rateLimit := newRateLimiter(getKey(r), p)
-			w.Header().Add("X-Rate-Limit-Limit", strconv.FormatInt(rateLimit.Limit, 10))
-			w.Header().Add("X-Rate-Limit-Remaining", strconv.FormatInt(rateLimit.Remaining, 10))
-			w.Header().Add("X-Rate-Limit-Reset", strconv.FormatInt(rateLimit.Reset, 10))
-
-			err := rateLimit.appendRequest()
+			key := getKey(r)
+			granted, remaining, err := grant(p, key)
 			if err != nil {
-				// maybe a redis error at this point
-				log.Error(err, "failed to append request")
-				w.WriteHeader(http.StatusTooManyRequests)
-				return
+				log.Error(err, "failed to check if access is granted")
 			}
 
-			if rateLimit.limitIsReached() {
+			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriod))
+			w.Header().Add("X-Rate-Limit-Remaining", strconv.Itoa(remaining))
+			w.Header().Add("X-Rate-Limit-Reset", strconv.Itoa(periodSeconds))
+
+			if granted == false {
 				w.WriteHeader(http.StatusTooManyRequests)
 				return
 			}
@@ -78,67 +75,52 @@ func Limit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Handle
 	}
 }
 
-func newRateLimiter(key string, pool *redis.Pool) *rateLimiter {
-	limiter := &rateLimiter{
-		key:     key,
-		tracker: pool,
-		Limit:   perPeriod,
-		Reset:   periodSeconds,
-	}
-
-	return limiter
-}
-
-func (rl *rateLimiter) limitIsReached() bool {
-	return rl.Remaining < 1
-}
-
-func (rl *rateLimiter) appendRequest() error {
+// grant checks if the access is granted for this bucket key
+var grant = func(pool *redis.Pool, key string) (granted bool, remaining int, err error) {
 	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
-		return err
+		return false, 0, err
 	}
 
-	conn := rl.tracker.Get()
+	conn := pool.Get()
 	defer conn.Close() // nolint: errcheck
 
 	err = conn.Send("MULTI")
 	if err != nil {
-		return err
+		return false, 0, err
 	}
 
 	// Add the new request to the bucket
-	err = conn.Send("ZADD", rl.key, accessTime, accessTime)
+	err = conn.Send("ZADD", key, accessTime, accessTime)
 	if err != nil {
-		return err
+		return false, 0, err
 	}
 
 	// Remove any keys that are outside of the interval
-	err = conn.Send("ZREMRANGEBYSCORE", rl.key, 0, accessTime-duration.Nanoseconds())
+	err = conn.Send("ZREMRANGEBYSCORE", key, 0, accessTime-duration.Nanoseconds())
 	if err != nil {
-		return err
+		return false, 0, err
 	}
 
 	// Check how many keys we have in the set
-	err = conn.Send("ZRANGE", rl.key, 0, -1)
+	err = conn.Send("ZRANGE", key, 0, -1)
 	if err != nil {
-		return err
+		return false, 0, err
 	}
 
 	results, err := redis.Values(conn.Do("EXEC"))
 	if err != nil {
-		return errors.Wrap(err, "transaction failed")
+		return false, 0, errors.Wrap(err, "transaction failed")
 	}
 
 	keys, err := redis.Strings(results[len(results)-1], err)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse results")
+		return false, 0, errors.Wrap(err, "failed to parse results")
 	}
 
-	rl.Remaining = rl.Limit - int64(len(keys))
-
-	return nil
+	remaining = perPeriod - len(keys)
+	return remaining >= 1, remaining, nil
 }
 
 // a helper function to make it easier to test
