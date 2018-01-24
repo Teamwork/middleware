@@ -39,7 +39,5 @@ func Log(next http.Handler) http.Handler {
 			time.Now().Format(log.TimeFormat),
 			fmt.Sprintf(status, statusCode), r.Method, r.Host,
 			r.RequestURI)
-
-		return
 	})
 }

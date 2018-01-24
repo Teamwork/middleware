@@ -72,8 +72,6 @@ func Rescue(extraFields func(*http.Request, *log.Entry) *log.Entry, dev bool) fu
 				default:
 					w.Write([]byte("Sorry, the server ran into a problem processing this request.")) // nolint: errcheck
 				}
-
-				return
 			}()
 
 			next.ServeHTTP(w, r)

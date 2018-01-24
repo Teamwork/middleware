@@ -18,7 +18,6 @@ func WithConfig(c Config) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("API-Version", fmt.Sprintf("region: '%s' env: '%s' version: '%s'", c.AWSRegion, c.Env, c.Version))
 			next.ServeHTTP(w, r)
-			return
 		})
 	}
 }

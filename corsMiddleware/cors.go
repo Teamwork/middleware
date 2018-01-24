@@ -190,7 +190,6 @@ func WithConfig(config Config) func(http.Handler) http.Handler {
 			}
 
 			w.WriteHeader(http.StatusNoContent)
-			return
 		})
 	}
 }
