@@ -1,4 +1,5 @@
 // Package ratelimitMiddleware implements rate limiting of HTTP requests.
+// The default rate is 20 requests per minute. This rate can be changed using SetRate.
 package ratelimitMiddleware // import "github.com/teamwork/middleware/ratelimitMiddleware"
 
 import (
@@ -14,9 +15,8 @@ import (
 )
 
 const (
-	// ErrRateLimit is used when the rate limit is reached and requests are
-	// being throttled.
-	ErrRateLimit = "Rate limit exceeded"
+	// ErrInvalidRate is used when the rate is less than 1 request per second.
+	ErrInvalidRate = "Invalid rate"
 )
 
 var (
@@ -25,6 +25,18 @@ var (
 	perPeriod     = 20
 	periodSeconds = 60
 )
+
+// SetRate set the rate limit rate.
+// (10, time.Second) is 10 requests per second
+func SetRate(n int, d time.Duration) error {
+	if d < time.Second && d < time.Hour {
+		return errors.New(ErrInvalidRate)
+	}
+
+	perPeriod = n
+	periodSeconds = int(d.Seconds())
+	return nil
+}
 
 // GetKeyFunc is a function that generates bucket keys.
 type GetKeyFunc func(req *http.Request) string
