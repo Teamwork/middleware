@@ -29,7 +29,7 @@ var (
 // SetRate set the rate limit rate.
 // (10, time.Second) is 10 requests per second
 func SetRate(n int, d time.Duration) error {
-	if d < time.Second && d > time.Hour {
+	if d < time.Second || d > time.Hour {
 		return errors.New(ErrInvalidRate)
 	}
 
