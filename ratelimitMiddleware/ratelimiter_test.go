@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/teamwork/crm-core/crm"
-
 	"github.com/garyburd/redigo/redis"
 	"github.com/rafaeljusto/redigomock"
 	"github.com/teamwork/test"
@@ -81,7 +79,7 @@ func TestRateLimit(t *testing.T) {
 				return false
 			},
 			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
-				return false, 0, crm.ErrTest
+				return false, 0, fmt.Errorf("test")
 			},
 			getKey: func(req *http.Request) string {
 				return "test"
@@ -96,7 +94,7 @@ func TestRateLimit(t *testing.T) {
 				return false
 			},
 			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
-				return false, 0, crm.ErrTest
+				return false, 0, fmt.Errorf("test")
 			},
 			getKey: func(req *http.Request) string {
 				return "test"
