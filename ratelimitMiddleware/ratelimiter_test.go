@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/teamwork/crm-core/crm"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/rafaeljusto/redigomock"
 	"github.com/teamwork/test"
@@ -23,6 +25,7 @@ func TestRateLimit(t *testing.T) {
 		in           *http.Request
 		getKey       GetKeyFunc
 		ignore       IgnoreFunc
+		grantOnErr   bool
 		grantFunc    func(*redis.Pool, string) (bool, int, error)
 		expectedCode int
 	}{
@@ -38,6 +41,7 @@ func TestRateLimit(t *testing.T) {
 			getKey: func(req *http.Request) string {
 				return "test"
 			},
+			grantOnErr:   true,
 			expectedCode: http.StatusOK,
 		},
 		{
@@ -52,6 +56,7 @@ func TestRateLimit(t *testing.T) {
 			getKey: func(req *http.Request) string {
 				return "test"
 			},
+			grantOnErr:   true,
 			expectedCode: http.StatusOK,
 		},
 		{
@@ -66,6 +71,37 @@ func TestRateLimit(t *testing.T) {
 			getKey: func(req *http.Request) string {
 				return "test"
 			},
+			grantOnErr:   true,
+			expectedCode: http.StatusTooManyRequests,
+		},
+		{
+			description: "it should grant access when GrantOnErr is true and redis returns err",
+			in:          &http.Request{RemoteAddr: "127.0.0.1"},
+			ignore: func(req *http.Request) bool {
+				return false
+			},
+			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+				return false, 0, crm.ErrTest
+			},
+			getKey: func(req *http.Request) string {
+				return "test"
+			},
+			grantOnErr:   true,
+			expectedCode: http.StatusOK,
+		},
+		{
+			description: "it should block access when GrantOnErr is false and redis returns err",
+			in:          &http.Request{RemoteAddr: "127.0.0.1"},
+			ignore: func(req *http.Request) bool {
+				return false
+			},
+			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+				return false, 0, crm.ErrTest
+			},
+			getKey: func(req *http.Request) string {
+				return "test"
+			},
+			grantOnErr:   false,
 			expectedCode: http.StatusTooManyRequests,
 		},
 	}
@@ -77,6 +113,7 @@ func TestRateLimit(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.description, func(t *testing.T) {
+			GrantOnErr = scenario.grantOnErr
 			grant = scenario.grantFunc
 			handler := RateLimit(nil, scenario.getKey, scenario.ignore)(handle{}).ServeHTTP
 			rr := test.HTTP(t, scenario.in, handler)
