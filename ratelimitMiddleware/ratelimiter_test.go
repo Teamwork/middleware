@@ -111,9 +111,8 @@ func TestRateLimit(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.description, func(t *testing.T) {
-			GrantOnErr = scenario.grantOnErr
 			grant = scenario.grantFunc
-			handler := RateLimit(nil, scenario.getKey, scenario.ignore)(handle{}).ServeHTTP
+			handler := RateLimit(nil, scenario.getKey, scenario.ignore, scenario.grantOnErr)(handle{}).ServeHTTP
 			rr := test.HTTP(t, scenario.in, handler)
 			if rr.Code != scenario.expectedCode {
 				t.Errorf("expected code %d, got %d", scenario.expectedCode, rr.Code)

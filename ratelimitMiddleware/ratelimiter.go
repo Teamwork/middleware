@@ -52,12 +52,10 @@ func IPBucket(prefix string, req *http.Request) GetKeyFunc {
 	}
 }
 
-// GrantOnErr defines if it should grant access when Redis is down.
-var GrantOnErr = true
-
 // RateLimit limits requests for a key provided by getKey function.
 // If ignore function returns true, rate limit is bypassed.
-func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Handler) http.Handler {
+// grantOnErr argument defines if it should grant access when Redis is down.
+func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc, grantOnErr bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if ignore != nil && ignore(r) {
@@ -71,7 +69,7 @@ func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc) func(http.Ha
 				log.Error(err, "failed to check if access is granted")
 				// returns an extra header when redis is down
 				w.Header().Add("X-Rate-Limit-Err", "1")
-				granted = GrantOnErr
+				granted = grantOnErr
 			}
 
 			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriod))
