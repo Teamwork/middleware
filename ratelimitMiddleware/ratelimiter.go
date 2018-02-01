@@ -95,7 +95,12 @@ var grant = func(pool *redis.Pool, key string) (granted bool, remaining int, err
 	}
 
 	conn := pool.Get()
-	defer conn.Close() // nolint: errcheck
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Error(err, "error when closing Redis connection")
+		}
+	}()
 
 	err = conn.Send("MULTI")
 	if err != nil {
