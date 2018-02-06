@@ -28,7 +28,6 @@ type handle struct{}
 
 func (h handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("handler"))
-
 }
 
 func TestAudit(t *testing.T) {
