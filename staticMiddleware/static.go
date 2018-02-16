@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-
-	"github.com/teamwork/log"
 )
 
 // BlockTraversal prevents "../../../../../etc/passwd" type path traversal
@@ -24,8 +22,8 @@ func BlockTraversal(root string) func(http.Handler) http.Handler {
 
 			abs, err := filepath.Abs(root + r.URL.Path)
 			if err != nil {
-				log.Errorf(err, "error getting absolute path")
-				w.WriteHeader(http.StatusNoContent)
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintf(w, "Not found: %v", r.URL.Path)
 				return
 			}
 
@@ -55,8 +53,6 @@ func BlockDotfiles(next http.Handler) http.Handler {
 		if strings.Contains(r.URL.Path, "/.") {
 			abs, _ := filepath.Abs(r.URL.Path)
 			if strings.Contains(abs, "/.") {
-				log.Printf("blocked access to pathname starting with dot: %v",
-					r.URL.Path)
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}

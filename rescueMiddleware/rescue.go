@@ -8,21 +8,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime/debug"
 
 	"github.com/kr/pretty"
-
-	"github.com/teamwork/log"
 )
 
 // Rescue from panic()s in any of the lower middleware or HTTP handlers.
 //
 // The extraFields callback can be used to add extra fields to the log (such as
 // perhaps a installation ID or user ID from the session).
-func Rescue(extraFields func(*http.Request, *log.Entry) *log.Entry, dev bool) func(http.Handler) http.Handler {
+func Rescue(
+	log func(*http.Request, error),
+	dev bool,
+) func(http.Handler) http.Handler {
+
+	if log == nil {
+		log = func(r *http.Request, err error) {
+			fmt.Fprintf(os.Stderr, "%v: %v", r.URL.Path, err)
+		}
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			l := log.Module("panic handler")
+
 			defer func() {
 				rec := recover()
 				if rec == nil {
@@ -39,12 +48,7 @@ func Rescue(extraFields func(*http.Request, *log.Entry) *log.Entry, dev bool) fu
 					err = pretty.Errorf("%v", rec)
 				}
 
-				if extraFields != nil {
-					l = extraFields(r, l)
-				}
-
-				// Report to Sentry.
-				l.Err(err)
+				log(r, err)
 
 				w.WriteHeader(http.StatusInternalServerError)
 

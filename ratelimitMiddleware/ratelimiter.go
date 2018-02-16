@@ -5,12 +5,12 @@ package ratelimitMiddleware // import "github.com/teamwork/middleware/ratelimitM
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
-	"github.com/teamwork/log"
 	"github.com/tomasen/realip"
 )
 
@@ -26,6 +26,19 @@ var (
 	periodSeconds = 60
 )
 
+// Config for RateLimit
+type Config struct {
+	Pool       *redis.Pool
+	GrantOnErr bool
+	ErrorLog   func(error, string)
+
+	// GetKey generates bucket keys.
+	GetKey func(req *http.Request) string
+
+	// Ignore rate limit verification if this returns true.
+	Ignore func(req *http.Request) bool
+}
+
 // SetRate set the rate limit rate.
 // (10, time.Second) is 10 requests per second
 func SetRate(n int, d time.Duration) error {
@@ -38,15 +51,8 @@ func SetRate(n int, d time.Duration) error {
 	return nil
 }
 
-// GetKeyFunc is a function that generates bucket keys.
-type GetKeyFunc func(req *http.Request) string
-
-// IgnoreFunc determines when rate limit verification should be ignored.
-type IgnoreFunc func(req *http.Request) bool
-
-// IPBucket is a generator of rate limit buckets based on
-// client's IP address
-func IPBucket(prefix string, req *http.Request) GetKeyFunc {
+// IPBucket is a generator of rate limit buckets based on client's IP address
+func IPBucket(prefix string, req *http.Request) func(req *http.Request) string {
 	return func(req *http.Request) string {
 		return fmt.Sprintf("%s-%s", prefix, realip.RealIP(req))
 	}
@@ -55,21 +61,32 @@ func IPBucket(prefix string, req *http.Request) GetKeyFunc {
 // RateLimit limits requests for a key provided by getKey function.
 // If ignore function returns true, rate limit is bypassed.
 // grantOnErr argument defines if it should grant access when Redis is down.
-func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc, grantOnErr bool) func(http.Handler) http.Handler {
+func RateLimit(opts Config) func(http.Handler) http.Handler {
+
+	if opts.GetKey == nil {
+		panic("opts.GetKey is nil")
+	}
+
+	if opts.ErrorLog == nil {
+		opts.ErrorLog = func(err error, desc string) {
+			fmt.Fprintf(os.Stderr, "%v: %v", desc, err)
+		}
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ignore != nil && ignore(r) {
+			if opts.Ignore != nil && opts.Ignore(r) {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			key := getKey(r)
-			granted, remaining, err := grant(p, key)
+			key := opts.GetKey(r)
+			granted, remaining, err := grant(&opts, key)
 			if err != nil {
-				log.Error(err, "failed to check if access is granted")
+				opts.ErrorLog(err, "failed to check if access is granted")
 				// returns an extra header when redis is down
 				w.Header().Add("X-Rate-Limit-Err", "1")
-				granted = grantOnErr
+				granted = opts.GrantOnErr
 			}
 
 			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriod))
@@ -87,18 +104,18 @@ func RateLimit(p *redis.Pool, getKey GetKeyFunc, ignore IgnoreFunc, grantOnErr b
 }
 
 // grant checks if the access is granted for this bucket key
-var grant = func(pool *redis.Pool, key string) (granted bool, remaining int, err error) {
+var grant = func(opts *Config, key string) (granted bool, remaining int, err error) {
 	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
 		return false, 0, err
 	}
 
-	conn := pool.Get()
+	conn := opts.Pool.Get()
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			log.Error(err, "error when closing Redis connection")
+			opts.ErrorLog(err, "error when closing Redis connection")
 		}
 	}()
 
