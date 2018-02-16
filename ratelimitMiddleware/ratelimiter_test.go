@@ -21,10 +21,10 @@ func TestRateLimit(t *testing.T) {
 	scenarios := []struct {
 		description  string
 		in           *http.Request
-		getKey       GetKeyFunc
-		ignore       IgnoreFunc
+		getKey       func(*http.Request) string
+		ignore       func(*http.Request) bool
 		grantOnErr   bool
-		grantFunc    func(*redis.Pool, string) (bool, int, error)
+		grantFunc    func(*Config, string) (bool, int, error)
 		expectedCode int
 	}{
 		{
@@ -33,7 +33,7 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+			grantFunc: func(opts *Config, k string) (bool, int, error) {
 				return true, 0, nil
 			},
 			getKey: func(req *http.Request) string {
@@ -48,7 +48,7 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return true
 			},
-			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+			grantFunc: func(opts *Config, k string) (bool, int, error) {
 				return false, 0, nil
 			},
 			getKey: func(req *http.Request) string {
@@ -63,7 +63,7 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+			grantFunc: func(opts *Config, k string) (bool, int, error) {
 				return false, 0, nil
 			},
 			getKey: func(req *http.Request) string {
@@ -78,7 +78,7 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+			grantFunc: func(opts *Config, k string) (bool, int, error) {
 				return false, 0, fmt.Errorf("test")
 			},
 			getKey: func(req *http.Request) string {
@@ -93,7 +93,7 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(p *redis.Pool, k string) (bool, int, error) {
+			grantFunc: func(opts *Config, k string) (bool, int, error) {
 				return false, 0, fmt.Errorf("test")
 			},
 			getKey: func(req *http.Request) string {
@@ -112,7 +112,13 @@ func TestRateLimit(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.description, func(t *testing.T) {
 			grant = scenario.grantFunc
-			handler := RateLimit(nil, scenario.getKey, scenario.ignore, scenario.grantOnErr)(handle{}).ServeHTTP
+			handler := RateLimit(Config{
+				Pool:       nil,
+				GetKey:     scenario.getKey,
+				Ignore:     scenario.ignore,
+				GrantOnErr: scenario.grantOnErr,
+			})(handle{}).ServeHTTP
+
 			rr := test.HTTP(t, scenario.in, handler)
 			if rr.Code != scenario.expectedCode {
 				t.Errorf("expected code %d, got %d", scenario.expectedCode, rr.Code)
@@ -204,7 +210,7 @@ func TestGrant(t *testing.T) {
 			conn.Clear()
 			scenario.stub()
 
-			granted, remaining, err := grant(mockRedisPool, "test")
+			granted, remaining, err := grant(&Config{Pool: mockRedisPool}, "test")
 
 			if scenario.expectedError != nil && !test.ErrorContains(err, scenario.expectedError.Error()) {
 				t.Fatalf("wrong error: %v", err)

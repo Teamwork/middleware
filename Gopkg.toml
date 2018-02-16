@@ -35,8 +35,4 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/teamwork/log"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/teamwork/test"
