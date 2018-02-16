@@ -1,4 +1,5 @@
-// Package corsMiddleware implements cross origin resource sharding headers.
+// Package corsMiddleware implements cross origin resource sharing (CORS)
+// headers.
 package corsMiddleware // import "github.com/teamwork/middleware/corsMiddleware"
 
 import (
@@ -7,48 +8,8 @@ import (
 	"strings"
 )
 
-// HTTP methods
-const (
-	CONNECT = "CONNECT"
-	DELETE  = "DELETE"
-	GET     = "GET"
-	HEAD    = "HEAD"
-	OPTIONS = "OPTIONS"
-	PATCH   = "PATCH"
-	POST    = "POST"
-	PUT     = "PUT"
-	TRACE   = "TRACE"
-)
-
 // Constants for header types
 const (
-	HeaderAccept              = "Accept"
-	HeaderAcceptEncoding      = "Accept-Encoding"
-	HeaderAllow               = "Allow"
-	HeaderAuthorization       = "Authorization"
-	HeaderContentDisposition  = "Content-Disposition"
-	HeaderContentEncoding     = "Content-Encoding"
-	HeaderContentLength       = "Content-Length"
-	HeaderContentType         = "Content-Type"
-	HeaderCookie              = "Cookie"
-	HeaderSetCookie           = "Set-Cookie"
-	HeaderIfModifiedSince     = "If-Modified-Since"
-	HeaderLastModified        = "Last-Modified"
-	HeaderLocation            = "Location"
-	HeaderUpgrade             = "Upgrade"
-	HeaderVary                = "Vary"
-	HeaderWWWAuthenticate     = "WWW-Authenticate"
-	HeaderXForwardedFor       = "X-Forwarded-For"
-	HeaderXForwardedProto     = "X-Forwarded-Proto"
-	HeaderXForwardedProtocol  = "X-Forwarded-Protocol"
-	HeaderXForwardedSsl       = "X-Forwarded-Ssl"
-	HeaderXUrlScheme          = "X-Url-Scheme"
-	HeaderXHTTPMethodOverride = "X-HTTP-Method-Override"
-	HeaderXRealIP             = "X-Real-IP"
-	HeaderXRequestID          = "X-Request-ID"
-	HeaderServer              = "Server"
-	HeaderOrigin              = "Origin"
-
 	// Access control
 	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
 	HeaderAccessControlRequestHeaders   = "Access-Control-Request-Headers"
@@ -68,74 +29,66 @@ const (
 	HeaderXCSRFToken              = "X-CSRF-Token"
 )
 
-type (
-	// Config defines the config for CORS middleware.
-	Config struct {
-		// AllowOrigin defines a list of origins that may access the resource.
-		// Optional, with default value as []string{"*"}.
-		AllowOrigins []string
+// Config for the middleware.
+type Config struct {
+	// AllowOrigin defines a list of origins that may access the resource.
+	// Optional, with default value as []string{"*"}.
+	AllowOrigins []string
 
-		// AllowMethods defines a list methods allowed when accessing the resource.
-		// This is used in response to a preflight request.
-		// Optional, with default value as `DefaultConfig.AllowMethods`.
-		AllowMethods []string
+	// AllowMethods defines a list methods allowed when accessing the resource.
+	// This is used in response to a preflight request.
+	// Optional, with default value as `DefaultConfig.AllowMethods`.
+	AllowMethods []string
 
-		// AllowHeaders defines a list of request headers that can be used when
-		// making the actual request. This in response to a preflight request.
-		// Optional, with default value as []string{}.
-		AllowHeaders []string
+	// AllowHeaders defines a list of request headers that can be used when
+	// making the actual request. This in response to a preflight request.
+	// Optional, with default value as []string{}.
+	AllowHeaders []string
 
-		// AllowCredentials indicates whether or not the response to the request
-		// can be exposed when the credentials flag is true. When used as part of
-		// a response to a preflight request, this indicates whether or not the
-		// actual request can be made using credentials.
-		// Optional, with default value as false.
-		AllowCredentials bool
+	// AllowCredentials indicates whether or not the response to the request
+	// can be exposed when the credentials flag is true. When used as part of
+	// a response to a preflight request, this indicates whether or not the
+	// actual request can be made using credentials.
+	// Optional, with default value as false.
+	AllowCredentials bool
 
-		// ExposeHeaders defines a whitelist headers that clients are allowed to
-		// access.
-		// Optional, with default value as []string{}.
-		ExposeHeaders []string
+	// ExposeHeaders defines a whitelist headers that clients are allowed to
+	// access.
+	// Optional, with default value as []string{}.
+	ExposeHeaders []string
 
-		// MaxAge indicates how long (in seconds) the results of a preflight request
-		// can be cached.
-		// Optional, with default value as 0.
-		MaxAge int
-	}
-)
-
-var (
-	// DefaultConfig is the default CORS middleware config.
-	DefaultConfig = Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{GET, HEAD, PUT, POST, DELETE},
-	}
-)
-
-// Add returns a Cross-Origin Resource Sharing (CORS) middleware.
-// See https://developer.mozilla.org/en/docs/Web/HTTP/Access_control_CORS
-func Add(next http.Handler) http.Handler {
-	return WithConfig(DefaultConfig)(next)
+	// MaxAge indicates how long (in seconds) the results of a preflight request
+	// can be cached.
+	// Optional, with default value as 0.
+	MaxAge int
 }
 
-// WithConfig returns a CORS middleware from config.
-// See `CORS()`.
-func WithConfig(config Config) func(http.Handler) http.Handler {
+// DefaultConfig is the default CORS middleware config.
+var DefaultConfig = Config{
+	AllowOrigins: []string{"*"},
+	AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut,
+		http.MethodPost, http.MethodDelete},
+}
+
+// Add the CORS middleware.
+func Add(config Config) func(http.Handler) http.Handler {
+
+	if len(config.AllowOrigins) == 0 {
+		config.AllowOrigins = DefaultConfig.AllowOrigins
+	}
+	if len(config.AllowMethods) == 0 {
+		config.AllowMethods = DefaultConfig.AllowMethods
+	}
+
+	allowMethods := strings.Join(config.AllowMethods, ",")
+	allowHeaders := strings.Join(config.AllowHeaders, ",")
+	exposeHeaders := strings.Join(config.ExposeHeaders, ",")
+	maxAge := strconv.Itoa(config.MaxAge)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Defaults
-			if len(config.AllowOrigins) == 0 {
-				config.AllowOrigins = DefaultConfig.AllowOrigins
-			}
-			if len(config.AllowMethods) == 0 {
-				config.AllowMethods = DefaultConfig.AllowMethods
-			}
-			allowMethods := strings.Join(config.AllowMethods, ",")
-			allowHeaders := strings.Join(config.AllowHeaders, ",")
-			exposeHeaders := strings.Join(config.ExposeHeaders, ",")
-			maxAge := strconv.Itoa(config.MaxAge)
 
-			origin := r.Header.Get(HeaderOrigin)
+			origin := r.Header.Get("Origin")
 
 			// Check allowed origins
 			allowedOrigin := ""
@@ -147,8 +100,8 @@ func WithConfig(config Config) func(http.Handler) http.Handler {
 			}
 
 			// Simple request
-			if r.Method != OPTIONS {
-				w.Header().Add(HeaderVary, HeaderOrigin)
+			if r.Method != http.MethodOptions {
+				w.Header().Add("Vary", "Origin")
 				if origin == "" || allowedOrigin == "" {
 					next.ServeHTTP(w, r)
 					return
@@ -165,9 +118,9 @@ func WithConfig(config Config) func(http.Handler) http.Handler {
 			}
 
 			// Pre-flight request
-			w.Header().Add(HeaderVary, HeaderOrigin)
-			w.Header().Add(HeaderVary, HeaderAccessControlRequestMethod)
-			w.Header().Add(HeaderVary, HeaderAccessControlRequestHeaders)
+			w.Header().Add("Vary", "Origin")
+			w.Header().Add("Vary", HeaderAccessControlRequestMethod)
+			w.Header().Add("Vary", HeaderAccessControlRequestHeaders)
 			if origin == "" || allowedOrigin == "" {
 				next.ServeHTTP(w, r)
 				return
