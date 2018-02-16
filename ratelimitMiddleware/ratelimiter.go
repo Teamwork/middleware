@@ -52,7 +52,7 @@ func SetRate(n int, d time.Duration) error {
 }
 
 // IPBucket is a generator of rate limit buckets based on client's IP address
-func IPBucket(prefix string, req *http.Request) func(req *http.Request) string {
+func IPBucket(prefix string) func(*http.Request) string {
 	return func(req *http.Request) string {
 		return fmt.Sprintf("%s-%s", prefix, realip.RealIP(req))
 	}
