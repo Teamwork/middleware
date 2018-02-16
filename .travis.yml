@@ -4,9 +4,7 @@ go:
 go_import_path: github.com/teamwork/middleware
 notifications:
   email: false
-cache:
-  directories:
-    - $HOME/gopath/pkg
+  webhooks: http://tw-bot.teamworkops.com:8182/travis/buildstatus
 install:
   - ./bin/setup-travis
 script:

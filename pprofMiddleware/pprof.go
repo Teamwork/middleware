@@ -1,4 +1,5 @@
-package pprofMiddleware
+// Package pprofMiddleware adds profiling.
+package pprofMiddleware // import "github.com/teamwork/middleware/pprofMiddleware"
 
 import (
 	"fmt"

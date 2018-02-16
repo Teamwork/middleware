@@ -1,3 +1,4 @@
+// Package headerMiddleware adds HTTP headers.
 package headerMiddleware // import "github.com/teamwork/middleware/headerMiddleware"
 
 import (
