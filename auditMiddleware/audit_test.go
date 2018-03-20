@@ -116,7 +116,7 @@ func TestAudit(t *testing.T) {
 			a := testAuditor{}
 			tc.opts.Auditor = &a
 
-			rr := test.HTTP(t, &tc.req, Do(tc.opts)(handle{}))
+			rr := test.HTTP(t, &tc.req, Do(tc.opts)(handle{}).ServeHTTP)
 
 			if rr.Code != 200 {
 				t.Fatalf("code != 200: %v", rr.Code)
