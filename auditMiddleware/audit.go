@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -35,9 +36,10 @@ type Auditor interface {
 
 // Options for the middleware.
 type Options struct {
-	Auditor     Auditor
-	Methods     []string
-	IgnorePaths []string
+	Auditor        Auditor
+	Methods        []string
+	IgnorePaths    []string
+	FilteredFields []string
 
 	// MaxSize sets the maximum size to read in bytes for the request body and
 	// form params.
@@ -61,7 +63,7 @@ type Audit struct {
 	RequestHeaders Header `db:"requestHeaders"`
 	QueryParams    Values `db:"queryParams"`
 	FormParams     Values `db:"formParams"`
-	RequestBody    []byte `db:"requestBody"`
+	RequestBody    string `db:"requestBody"`
 }
 
 // Time embeds time.Time and adds methods for the sql.Scanner interface.
@@ -190,12 +192,49 @@ func Middleware(opts Options, r *http.Request) {
 		}
 	}
 
+	body := make(map[string]interface{})
 	if !opts.SkipRequestBody {
-		body, err := httputilx.DumpBody(r, opts.MaxSize)
+		b, err := httputilx.DumpBody(r, opts.MaxSize)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			opts.Auditor.Log(r, errors.Wrap(err, "could not read body"))
 		}
-		a.RequestBody = body
+		a.RequestBody = string(b)
+
+		if len(b) > 0 && len(opts.FilteredFields) > 0 {
+			err := json.Unmarshal(b, &body)
+			if err != nil {
+				log.Println(err)
+				opts.Auditor.Log(r, errors.Wrap(err, "could not parse body"))
+			}
+		}
+
+	}
+
+	for _, field := range opts.FilteredFields {
+		if a.RequestHeaders.Get(field) != "" {
+			a.RequestHeaders.Set(field, "[FILTERED]")
+		}
+
+		if a.FormParams.Get(field) != "" {
+			a.FormParams.Set(field, "[FILTERED]")
+		}
+
+		if a.QueryParams.Get(field) != "" {
+			a.QueryParams.Set(field, "[FILTERED]")
+		}
+
+		if _, ok := body[field]; ok {
+			body[field] = "[FILTERED]"
+		}
+	}
+
+	if len(body) > 0 {
+		b, err := json.Marshal(body)
+		if err != nil {
+			opts.Auditor.Log(r, errors.Wrap(err, "could not marshal body"))
+		}
+
+		a.RequestBody = string(b)
 	}
 
 	opts.Auditor.AddAudit(r, a)

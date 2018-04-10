@@ -68,7 +68,7 @@ func TestAudit(t *testing.T) {
 				FormParams: Values{url.Values{
 					"w00t": []string{"XXX"},
 				}},
-				RequestBody: []byte("Hello"),
+				RequestBody: "Hello",
 			},
 		},
 
@@ -106,7 +106,46 @@ func TestAudit(t *testing.T) {
 					"w00t": []string{"X"},
 					"asd":  []string{"z", "q"},
 				}},
-				RequestBody: []byte("H"),
+				RequestBody: "H",
+			},
+		},
+
+		// Filtered Params
+		{
+			req: http.Request{
+				Method: "POST",
+				URL: &url.URL{
+					Scheme:   "http",
+					Host:     "example.com",
+					Path:     "/foo",
+					RawQuery: "x=xyz",
+				},
+				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}},
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Body:       ioutil.NopCloser(strings.NewReader("{\"password\": \"my test\"}")),
+			},
+			opts: Options{
+				FilteredFields: []string{"password"},
+				MaxSize:        -1,
+			},
+			want: Audit{
+				UserID:         1,
+				InstallationID: 1,
+				Path:           "/foo",
+				Method:         "POST",
+				RequestHeaders: Header{http.Header{
+					"Some-Val": []string{"asd"},
+				}},
+				QueryParams: Values{url.Values{
+					"x": []string{"xyz"},
+				}},
+				FormParams: Values{url.Values{
+					"w00t": []string{"XXX"},
+					"asd":  []string{"zxcv", "qweqwe"},
+				}},
+				RequestBody: "{\"password\":\"[FILTERED]\"}",
 			},
 		},
 	}
