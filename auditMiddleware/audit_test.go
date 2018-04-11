@@ -68,7 +68,7 @@ func TestAudit(t *testing.T) {
 				FormParams: Values{url.Values{
 					"w00t": []string{"XXX"},
 				}},
-				RequestBody: "Hello",
+				RequestBody: []byte("Hello"),
 			},
 		},
 
@@ -106,7 +106,7 @@ func TestAudit(t *testing.T) {
 					"w00t": []string{"X"},
 					"asd":  []string{"z", "q"},
 				}},
-				RequestBody: "H",
+				RequestBody: []byte("H"),
 			},
 		},
 
@@ -121,7 +121,7 @@ func TestAudit(t *testing.T) {
 					RawQuery: "x=xyz",
 				},
 				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
-				Header:     http.Header{"Some-Val": []string{"asd"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}, "Accept": []string{"application/json"}},
 				ProtoMajor: 1,
 				ProtoMinor: 1,
 				Body:       ioutil.NopCloser(strings.NewReader("{\"password\": \"my test\"}")),
@@ -137,6 +137,7 @@ func TestAudit(t *testing.T) {
 				Method:         "POST",
 				RequestHeaders: Header{http.Header{
 					"Some-Val": []string{"asd"},
+					"Accept":   []string{"application/json"},
 				}},
 				QueryParams: Values{url.Values{
 					"x": []string{"xyz"},
@@ -145,7 +146,47 @@ func TestAudit(t *testing.T) {
 					"w00t": []string{"XXX"},
 					"asd":  []string{"zxcv", "qweqwe"},
 				}},
-				RequestBody: "{\"password\":\"[FILTERED]\"}",
+				RequestBody: []byte("{\"password\":\"[FILTERED]\"}"),
+			},
+		},
+
+		// Filtered no modify body
+		{
+			req: http.Request{
+				Method: "POST",
+				URL: &url.URL{
+					Scheme:   "http",
+					Host:     "example.com",
+					Path:     "/foo",
+					RawQuery: "x=xyz",
+				},
+				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}, "Accept": []string{"text/plain"}},
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Body:       ioutil.NopCloser(strings.NewReader("password: my test")),
+			},
+			opts: Options{
+				FilteredFields: []string{"password"},
+				MaxSize:        -1,
+			},
+			want: Audit{
+				UserID:         1,
+				InstallationID: 1,
+				Path:           "/foo",
+				Method:         "POST",
+				RequestHeaders: Header{http.Header{
+					"Some-Val": []string{"asd"},
+					"Accept":   []string{"text/plain"},
+				}},
+				QueryParams: Values{url.Values{
+					"x": []string{"xyz"},
+				}},
+				FormParams: Values{url.Values{
+					"w00t": []string{"XXX"},
+					"asd":  []string{"zxcv", "qweqwe"},
+				}},
+				RequestBody: []byte("password: my test"),
 			},
 		},
 	}

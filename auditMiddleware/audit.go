@@ -6,14 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"mime"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/teamwork/utils/httputilx"
+	"github.com/teamwork/utils/httputilx/header"
 	"github.com/teamwork/utils/sliceutil"
 )
 
@@ -63,7 +65,7 @@ type Audit struct {
 	RequestHeaders Header `db:"requestHeaders"`
 	QueryParams    Values `db:"queryParams"`
 	FormParams     Values `db:"formParams"`
-	RequestBody    string `db:"requestBody"`
+	RequestBody    []byte `db:"requestBody"`
 }
 
 // Time embeds time.Time and adds methods for the sql.Scanner interface.
@@ -192,22 +194,30 @@ func Middleware(opts Options, r *http.Request) {
 		}
 	}
 
-	body := make(map[string]interface{})
 	if !opts.SkipRequestBody {
 		b, err := httputilx.DumpBody(r, opts.MaxSize)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			opts.Auditor.Log(r, errors.Wrap(err, "could not read body"))
 		}
-		a.RequestBody = string(b)
+		a.RequestBody = b
+	}
 
-		if len(b) > 0 && len(opts.FilteredFields) > 0 {
-			err := json.Unmarshal(b, &body)
-			if err != nil {
-				log.Println(err)
-				opts.Auditor.Log(r, errors.Wrap(err, "could not parse body"))
-			}
+	if len(opts.FilteredFields) > 0 {
+		a.filterFields(r, opts)
+	}
+
+	opts.Auditor.AddAudit(r, a)
+}
+
+func (a *Audit) filterFields(r *http.Request, opts Options) {
+	body := make(map[string]interface{})
+	bodyIsJSON := isBodyJSON(r)
+
+	if bodyIsJSON && len(a.RequestBody) > 0 {
+		err := json.Unmarshal(a.RequestBody, &body)
+		if err != nil {
+			opts.Auditor.Log(r, errors.Wrap(err, "could not parse body"))
 		}
-
 	}
 
 	for _, field := range opts.FilteredFields {
@@ -228,14 +238,25 @@ func Middleware(opts Options, r *http.Request) {
 		}
 	}
 
-	if len(body) > 0 {
+	if bodyIsJSON && len(body) > 0 {
 		b, err := json.Marshal(body)
 		if err != nil {
 			opts.Auditor.Log(r, errors.Wrap(err, "could not marshal body"))
 		}
 
-		a.RequestBody = string(b)
+		a.RequestBody = b
+	}
+}
+
+func isBodyJSON(r *http.Request) bool {
+	specs := header.ParseAccept(r.Header, "Accept")
+	sort.Slice(specs, func(i, j int) bool { return specs[i].Q > specs[j].Q })
+	for _, spec := range specs {
+		ct, _, _ := mime.ParseMediaType(spec.Value)
+		if ct == "application/json" {
+			return true
+		}
 	}
 
-	opts.Auditor.AddAudit(r, a)
+	return false
 }
