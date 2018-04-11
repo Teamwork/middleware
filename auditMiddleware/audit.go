@@ -9,7 +9,6 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 
@@ -249,9 +248,7 @@ func (a *Audit) filterFields(r *http.Request, opts Options) {
 }
 
 func isBodyJSON(r *http.Request) bool {
-	specs := header.ParseAccept(r.Header, "Accept")
-	sort.Slice(specs, func(i, j int) bool { return specs[i].Q > specs[j].Q })
-	for _, spec := range specs {
+	for _, spec := range header.ParseAccept(r.Header, "Accept") {
 		ct, _, _ := mime.ParseMediaType(spec.Value)
 		if ct == "application/json" {
 			return true
