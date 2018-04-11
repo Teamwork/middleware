@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/teamwork/utils/httputilx"
+	"github.com/teamwork/utils/httputilx/header"
 	"github.com/teamwork/utils/sliceutil"
 )
 
@@ -35,9 +37,10 @@ type Auditor interface {
 
 // Options for the middleware.
 type Options struct {
-	Auditor     Auditor
-	Methods     []string
-	IgnorePaths []string
+	Auditor        Auditor
+	Methods        []string
+	IgnorePaths    []string
+	FilteredFields []string
 
 	// MaxSize sets the maximum size to read in bytes for the request body and
 	// form params.
@@ -191,12 +194,66 @@ func Middleware(opts Options, r *http.Request) {
 	}
 
 	if !opts.SkipRequestBody {
-		body, err := httputilx.DumpBody(r, opts.MaxSize)
+		b, err := httputilx.DumpBody(r, opts.MaxSize)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			opts.Auditor.Log(r, errors.Wrap(err, "could not read body"))
 		}
-		a.RequestBody = body
+		a.RequestBody = b
+	}
+
+	if len(opts.FilteredFields) > 0 {
+		a.filterFields(r, opts)
 	}
 
 	opts.Auditor.AddAudit(r, a)
+}
+
+func (a *Audit) filterFields(r *http.Request, opts Options) {
+	body := make(map[string]interface{})
+	bodyIsJSON := isBodyJSON(r)
+
+	if bodyIsJSON && len(a.RequestBody) > 0 {
+		err := json.Unmarshal(a.RequestBody, &body)
+		if err != nil {
+			opts.Auditor.Log(r, errors.Wrap(err, "could not parse body"))
+		}
+	}
+
+	for _, field := range opts.FilteredFields {
+		if a.RequestHeaders.Get(field) != "" {
+			a.RequestHeaders.Set(field, "[FILTERED]")
+		}
+
+		if a.FormParams.Get(field) != "" {
+			a.FormParams.Set(field, "[FILTERED]")
+		}
+
+		if a.QueryParams.Get(field) != "" {
+			a.QueryParams.Set(field, "[FILTERED]")
+		}
+
+		if _, ok := body[field]; ok {
+			body[field] = "[FILTERED]"
+		}
+	}
+
+	if bodyIsJSON && len(body) > 0 {
+		b, err := json.Marshal(body)
+		if err != nil {
+			opts.Auditor.Log(r, errors.Wrap(err, "could not marshal body"))
+		}
+
+		a.RequestBody = b
+	}
+}
+
+func isBodyJSON(r *http.Request) bool {
+	for _, spec := range header.ParseAccept(r.Header, "Accept") {
+		ct, _, _ := mime.ParseMediaType(spec.Value)
+		if ct == "application/json" {
+			return true
+		}
+	}
+
+	return false
 }

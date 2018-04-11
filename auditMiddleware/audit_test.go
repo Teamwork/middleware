@@ -109,6 +109,86 @@ func TestAudit(t *testing.T) {
 				RequestBody: []byte("H"),
 			},
 		},
+
+		// Filtered Params
+		{
+			req: http.Request{
+				Method: "POST",
+				URL: &url.URL{
+					Scheme:   "http",
+					Host:     "example.com",
+					Path:     "/foo",
+					RawQuery: "x=xyz",
+				},
+				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}, "Accept": []string{"application/json"}},
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Body:       ioutil.NopCloser(strings.NewReader("{\"password\": \"my test\"}")),
+			},
+			opts: Options{
+				FilteredFields: []string{"password"},
+				MaxSize:        -1,
+			},
+			want: Audit{
+				UserID:         1,
+				InstallationID: 1,
+				Path:           "/foo",
+				Method:         "POST",
+				RequestHeaders: Header{http.Header{
+					"Some-Val": []string{"asd"},
+					"Accept":   []string{"application/json"},
+				}},
+				QueryParams: Values{url.Values{
+					"x": []string{"xyz"},
+				}},
+				FormParams: Values{url.Values{
+					"w00t": []string{"XXX"},
+					"asd":  []string{"zxcv", "qweqwe"},
+				}},
+				RequestBody: []byte("{\"password\":\"[FILTERED]\"}"),
+			},
+		},
+
+		// Filtered no modify body
+		{
+			req: http.Request{
+				Method: "POST",
+				URL: &url.URL{
+					Scheme:   "http",
+					Host:     "example.com",
+					Path:     "/foo",
+					RawQuery: "x=xyz",
+				},
+				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}, "Accept": []string{"text/plain"}},
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Body:       ioutil.NopCloser(strings.NewReader("password: my test")),
+			},
+			opts: Options{
+				FilteredFields: []string{"password"},
+				MaxSize:        -1,
+			},
+			want: Audit{
+				UserID:         1,
+				InstallationID: 1,
+				Path:           "/foo",
+				Method:         "POST",
+				RequestHeaders: Header{http.Header{
+					"Some-Val": []string{"asd"},
+					"Accept":   []string{"text/plain"},
+				}},
+				QueryParams: Values{url.Values{
+					"x": []string{"xyz"},
+				}},
+				FormParams: Values{url.Values{
+					"w00t": []string{"XXX"},
+					"asd":  []string{"zxcv", "qweqwe"},
+				}},
+				RequestBody: []byte("password: my test"),
+			},
+		},
 	}
 
 	for i, tc := range cases {
