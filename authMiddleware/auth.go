@@ -3,6 +3,7 @@ package authMiddleware
 
 import (
 	"crypto/subtle"
+	"fmt"
 	"net/http"
 )
 
@@ -20,7 +21,7 @@ func Auth(opts Options) func(http.Handler) http.Handler {
 		password := []byte(opts.Password)
 		realm := `Basic realm="Restricted"`
 		if opts.Realm != "" {
-			realm = opts.Realm
+			realm = fmt.Sprintf(`Basic realm="%v"`, opts.Realm)
 		}
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
