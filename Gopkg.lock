@@ -29,6 +29,39 @@
   revision = "7cafcd837844e784b526369c9bce262804aebc60"
 
 [[projects]]
+  name = "github.com/labstack/echo"
+  packages = [
+    ".",
+    "context",
+    "engine",
+    "log",
+    "test"
+  ]
+  revision = "e08070379af60f5b9c0fb5bb2d1527ba9624fe43"
+  version = "v2.2.0"
+
+[[projects]]
+  name = "github.com/labstack/gommon"
+  packages = [
+    "color",
+    "log"
+  ]
+  revision = "6fe1405d73ec4bd4cd8a4ac8e2a2b2bf95d03954"
+  version = "0.2.4"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -60,6 +93,7 @@
   name = "github.com/teamwork/utils"
   packages = [
     "httputilx",
+    "httputilx/header",
     "ioutilx",
     "sliceutil"
   ]
@@ -71,9 +105,33 @@
   packages = ["."]
   revision = "b5850897b7b539a1c9f22cdaa3b547d1bd453db8"
 
+[[projects]]
+  branch = "master"
+  name = "github.com/valyala/bytebufferpool"
+  packages = ["."]
+  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/valyala/fasttemplate"
+  packages = ["."]
+  revision = "dcecefd839c4193db0d35b88ec65b4c12d360ab0"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "8d16fa6dc9a85c1cd3ed24ad08ff21cf94f10888"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "b126b21c05a91c856b027c16779c12e3bf236954"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9bf69735e5efef97997e299df2c6b76c2343e496db252d5b773e731780d30838"
+  inputs-digest = "aaf12c1c953ef2a605f603dede689498ae79ec85e7ce755e82c18cf7e593daf1"
   solver-name = "gps-cdcl"
   solver-version = 1
