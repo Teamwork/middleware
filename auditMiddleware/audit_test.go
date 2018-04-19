@@ -121,7 +121,7 @@ func TestAudit(t *testing.T) {
 					RawQuery: "x=xyz",
 				},
 				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
-				Header:     http.Header{"Some-Val": []string{"asd"}, "Accept": []string{"application/json"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}, "Content-Type": []string{"application/json"}},
 				ProtoMajor: 1,
 				ProtoMinor: 1,
 				Body:       ioutil.NopCloser(strings.NewReader("{\"password\": \"my test\"}")),
@@ -136,8 +136,8 @@ func TestAudit(t *testing.T) {
 				Path:           "/foo",
 				Method:         "POST",
 				RequestHeaders: Header{http.Header{
-					"Some-Val": []string{"asd"},
-					"Accept":   []string{"application/json"},
+					"Some-Val":     []string{"asd"},
+					"Content-Type": []string{"application/json"},
 				}},
 				QueryParams: Values{url.Values{
 					"x": []string{"xyz"},
@@ -161,7 +161,7 @@ func TestAudit(t *testing.T) {
 					RawQuery: "x=xyz",
 				},
 				Form:       url.Values{"w00t": []string{"XXX"}, "asd": []string{"zxcv", "qweqwe"}},
-				Header:     http.Header{"Some-Val": []string{"asd"}, "Accept": []string{"text/plain"}},
+				Header:     http.Header{"Some-Val": []string{"asd"}, "Content-Type": []string{"text/plain"}},
 				ProtoMajor: 1,
 				ProtoMinor: 1,
 				Body:       ioutil.NopCloser(strings.NewReader("password: my test")),
@@ -176,8 +176,8 @@ func TestAudit(t *testing.T) {
 				Path:           "/foo",
 				Method:         "POST",
 				RequestHeaders: Header{http.Header{
-					"Some-Val": []string{"asd"},
-					"Accept":   []string{"text/plain"},
+					"Some-Val":     []string{"asd"},
+					"Content-Type": []string{"text/plain"},
 				}},
 				QueryParams: Values{url.Values{
 					"x": []string{"xyz"},
