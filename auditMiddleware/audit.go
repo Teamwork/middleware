@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/teamwork/utils/httputilx"
-	"github.com/teamwork/utils/httputilx/header"
 	"github.com/teamwork/utils/sliceutil"
 )
 
@@ -210,7 +208,7 @@ func Middleware(opts Options, r *http.Request) {
 
 func (a *Audit) filterFields(r *http.Request, opts Options) {
 	body := make(map[string]interface{})
-	bodyIsJSON := isBodyJSON(r)
+	bodyIsJSON := strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")), "application/json")
 
 	if bodyIsJSON && len(a.RequestBody) > 0 {
 		err := json.Unmarshal(a.RequestBody, &body)
@@ -245,15 +243,4 @@ func (a *Audit) filterFields(r *http.Request, opts Options) {
 
 		a.RequestBody = b
 	}
-}
-
-func isBodyJSON(r *http.Request) bool {
-	for _, spec := range header.ParseAccept(r.Header, "Accept") {
-		ct, _, _ := mime.ParseMediaType(spec.Value)
-		if ct == "application/json" {
-			return true
-		}
-	}
-
-	return false
 }
