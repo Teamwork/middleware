@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/teamwork/utils/httputilx"
 	"github.com/teamwork/utils/sliceutil"
+	"github.com/teamwork/utils/stringutil"
 )
 
 // Auditor is a function which will do something with a new audit.
@@ -213,7 +214,8 @@ func (a *Audit) filterFields(r *http.Request, opts Options) {
 	if bodyIsJSON && len(a.RequestBody) > 0 {
 		err := json.Unmarshal(a.RequestBody, &body)
 		if err != nil {
-			opts.Auditor.Log(r, errors.Wrap(err, "could not parse body"))
+			opts.Auditor.Log(r, errors.Wrapf(err, "could not parse body for %s %s: %s",
+				r.Method, r.URL.String(), stringutil.Left(string(a.RequestBody), 4000)))
 		}
 	}
 
