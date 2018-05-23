@@ -114,9 +114,9 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 }
 
 // grant checks if the access is granted for this bucket key
-var grant = func(opts *Config, key string, perPeriodLocal, periodSecondsLocal int) (granted bool, remaining int, err error) {
+var grant = func(opts *Config, key string, perPeriod, periodSeconds int) (granted bool, remaining int, err error) {
 	accessTime := now().UnixNano()
-	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSecondsLocal))
+	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
 		return false, 0, err
 	}
@@ -162,7 +162,7 @@ var grant = func(opts *Config, key string, perPeriodLocal, periodSecondsLocal in
 		return false, 0, errors.Wrap(err, "failed to parse results")
 	}
 
-	remaining = perPeriodLocal - len(keys)
+	remaining = perPeriod - len(keys)
 	return remaining >= 1, remaining, nil
 }
 
