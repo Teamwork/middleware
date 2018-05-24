@@ -37,6 +37,10 @@ type Config struct {
 
 	// Ignore rate limit verification if this returns true.
 	Ignore func(req *http.Request) bool
+
+	// Rates returns the number of API calls (to all endpoints) that can be made
+	// by the client considering the request. If null global values will be used.
+	Rates func(req *http.Request) (perPeriod, periodSeconds int)
 }
 
 // SetRate set the rate limit rate.
@@ -80,8 +84,14 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 				return
 			}
 
+			perPeriodLocal := perPeriod
+			periodSecondsLocal := periodSeconds
+			if opts.Rates != nil {
+				perPeriodLocal, periodSecondsLocal = opts.Rates(r)
+			}
+
 			key := opts.GetKey(r)
-			granted, remaining, err := grant(&opts, key)
+			granted, remaining, err := grant(&opts, key, perPeriodLocal, periodSecondsLocal)
 			if err != nil {
 				opts.ErrorLog(err, "failed to check if access is granted")
 				// returns an extra header when redis is down
@@ -89,9 +99,9 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 				granted = opts.GrantOnErr
 			}
 
-			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriod))
+			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriodLocal))
 			w.Header().Add("X-Rate-Limit-Remaining", strconv.Itoa(remaining))
-			w.Header().Add("X-Rate-Limit-Reset", strconv.Itoa(periodSeconds))
+			w.Header().Add("X-Rate-Limit-Reset", strconv.Itoa(periodSecondsLocal))
 
 			if !granted {
 				w.WriteHeader(http.StatusTooManyRequests)
@@ -104,7 +114,7 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 }
 
 // grant checks if the access is granted for this bucket key
-var grant = func(opts *Config, key string) (granted bool, remaining int, err error) {
+var grant = func(opts *Config, key string, perPeriod, periodSeconds int) (granted bool, remaining int, err error) {
 	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
