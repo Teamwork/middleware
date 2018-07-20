@@ -18,7 +18,7 @@ func (h handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestRateLimit(t *testing.T) {
-	scenarios := []struct {
+	tests := []struct {
 		description  string
 		in           *http.Request
 		getKey       func(*http.Request) string
@@ -136,20 +136,20 @@ func TestRateLimit(t *testing.T) {
 		grant = oldGrant
 	}()
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.description, func(t *testing.T) {
-			grant = scenario.grantFunc
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			grant = tt.grantFunc
 			handler := RateLimit(Config{
 				Pool:       nil,
-				GetKey:     scenario.getKey,
-				Ignore:     scenario.ignore,
-				GrantOnErr: scenario.grantOnErr,
-				Rates:      scenario.rates,
+				GetKey:     tt.getKey,
+				Ignore:     tt.ignore,
+				GrantOnErr: tt.grantOnErr,
+				Rates:      tt.rates,
 			})(handle{}).ServeHTTP
 
-			rr := test.HTTP(t, scenario.in, http.HandlerFunc(handler))
-			if rr.Code != scenario.expectedCode {
-				t.Errorf("expected code %d, got %d", scenario.expectedCode, rr.Code)
+			rr := test.HTTP(t, tt.in, http.HandlerFunc(handler))
+			if rr.Code != tt.expectedCode {
+				t.Errorf("expected code %d, got %d", tt.expectedCode, rr.Code)
 			}
 		})
 	}
@@ -178,7 +178,7 @@ func TestGrant(t *testing.T) {
 
 	perPeriod = 2 // decrease limit to make easier to test
 
-	scenarios := []struct {
+	tests := []struct {
 		description   string
 		stub          func()
 		granted       bool
@@ -233,23 +233,23 @@ func TestGrant(t *testing.T) {
 		},
 	}
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.description, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
 			conn.Clear()
-			scenario.stub()
+			tt.stub()
 
 			granted, remaining, err := grant(&Config{Pool: mockRedisPool}, "test", 2, 60)
 
-			if scenario.expectedError != nil && !test.ErrorContains(err, scenario.expectedError.Error()) {
+			if tt.expectedError != nil && !test.ErrorContains(err, tt.expectedError.Error()) {
 				t.Fatalf("wrong error: %v", err)
 			}
 
-			if remaining != scenario.remaining {
-				t.Fatalf("unexpected remaining result; expect %d got %d", scenario.remaining, remaining)
+			if remaining != tt.remaining {
+				t.Fatalf("unexpected remaining result; expect %d got %d", tt.remaining, remaining)
 			}
 
-			if granted != scenario.granted {
-				t.Errorf("unexpected granted result; expect %t got %t", scenario.granted, granted)
+			if granted != tt.granted {
+				t.Errorf("unexpected granted result; expect %t got %t", tt.granted, granted)
 			}
 		})
 	}

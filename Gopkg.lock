@@ -2,78 +2,110 @@
 
 
 [[projects]]
+  digest = "1:0a39ec8bf5629610a4bc7873a92039ee509246da3cef1a0ea60f1ed7e5f9cea5"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = ""
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:ea0857a395b9b852ca08742ddf131c0dccd9288d3583fc8ae5acfd4b43b2e3cc"
   name = "github.com/garyburd/redigo"
   packages = [
     "internal",
-    "redis"
+    "redis",
   ]
+  pruneopts = ""
   revision = "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
   version = "v1.2.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:591a2778aa6e896980757ea87e659b3aa13d8c0e790310614028463a31c0998b"
   name = "github.com/kr/pretty"
   packages = ["."]
+  pruneopts = ""
   revision = "cfb55aafdaf3ec08f0db22699ab822c50091b1c4"
 
 [[projects]]
   branch = "master"
+  digest = "1:1e5ac60829f6dfdc976faf84389a452e6b01fdfd64d620d3cb6a22f22ac96a29"
   name = "github.com/kr/text"
   packages = ["."]
+  pruneopts = ""
   revision = "7cafcd837844e784b526369c9bce262804aebc60"
 
 [[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = ""
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:7a60165f32b09858e16d62011ac38313005d52b7a2a557491a311ad8401d5cf8"
   name = "github.com/rafaeljusto/redigomock"
   packages = ["."]
+  pruneopts = ""
   revision = "7ae0511314e9946bb0c87d6d485169ab2467a290"
   version = "v2.1"
 
 [[projects]]
   branch = "master"
+  digest = "1:bc8c0d6154feefe00aa5580230a5a57199b3e3edf4f8dd34803bdf06c2d01e71"
   name = "github.com/teamwork/test"
   packages = [
     ".",
-    "diff"
+    "diff",
   ]
+  pruneopts = ""
   revision = "109d4a7e538bd68fe61aadbeac95ef36d59a72b1"
 
 [[projects]]
   branch = "master"
+  digest = "1:95eeb75a1272120f79315df6a31b483a457c06f0d655237cb6d711904fc28585"
   name = "github.com/teamwork/utils"
   packages = [
     "httputilx",
     "ioutilx",
-    "sliceutil"
+    "sliceutil",
+    "stringutil",
   ]
+  pruneopts = ""
   revision = "80cee17504c9ee0061c054a255cd526e4f5f09ff"
 
 [[projects]]
   branch = "master"
+  digest = "1:82dea39f0bdcab1c43c6d3cd5cbe37756637338dda24196e6476374c42de509c"
   name = "github.com/tomasen/realip"
   packages = ["."]
+  pruneopts = ""
   revision = "b5850897b7b539a1c9f22cdaa3b547d1bd453db8"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9bf69735e5efef97997e299df2c6b76c2343e496db252d5b773e731780d30838"
+  input-imports = [
+    "github.com/garyburd/redigo/redis",
+    "github.com/kr/pretty",
+    "github.com/pkg/errors",
+    "github.com/rafaeljusto/redigomock",
+    "github.com/teamwork/test",
+    "github.com/teamwork/test/diff",
+    "github.com/teamwork/utils/httputilx",
+    "github.com/teamwork/utils/sliceutil",
+    "github.com/teamwork/utils/stringutil",
+    "github.com/tomasen/realip",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

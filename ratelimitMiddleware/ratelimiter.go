@@ -14,17 +14,18 @@ import (
 	"github.com/tomasen/realip"
 )
 
-const (
-	// ErrInvalidRate is used when the rate is less than 1 request per second.
-	ErrInvalidRate = "Invalid rate"
-)
-
 var (
+	// ErrInvalidRate is used when the rate is less than 1 request per second.
+	ErrInvalidRate = errors.New("invalid rate; needs to be between 1 and 3600 seconds")
+
 	// perPeriod is the number of API calls (to all endpoints) that can be made
 	// by the client before receiving a 429 error
 	perPeriod     = 20
 	periodSeconds = 60
 )
+
+// Helper function to make it easier to test.
+var now = func() time.Time { return time.Now() }
 
 // Config for RateLimit
 type Config struct {
@@ -33,21 +34,21 @@ type Config struct {
 	ErrorLog   func(error, string)
 
 	// GetKey generates bucket keys.
-	GetKey func(req *http.Request) string
+	GetKey func(*http.Request) string
 
-	// Ignore rate limit verification if this returns true.
-	Ignore func(req *http.Request) bool
+	// Ignore rate limit verification for this request if this returns true.
+	Ignore func(*http.Request) bool
 
 	// Rates returns the number of API calls (to all endpoints) that can be made
 	// by the client considering the request. If null global values will be used.
-	Rates func(req *http.Request) (perPeriod, periodSeconds int)
+	Rates func(*http.Request) (perPeriod, periodSeconds int)
 }
 
 // SetRate set the rate limit rate.
 // (10, time.Second) is 10 requests per second
 func SetRate(n int, d time.Duration) error {
 	if d < time.Second || d > time.Hour {
-		return errors.New(ErrInvalidRate)
+		return ErrInvalidRate
 	}
 
 	perPeriod = n
@@ -73,7 +74,7 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 
 	if opts.ErrorLog == nil {
 		opts.ErrorLog = func(err error, desc string) {
-			fmt.Fprintf(os.Stderr, "%v: %v", desc, err)
+			fmt.Fprintf(os.Stderr, "%v: %v", desc, err) // nolint: errcheck
 		}
 	}
 
@@ -113,7 +114,7 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 	}
 }
 
-// grant checks if the access is granted for this bucket key
+// grant checks if the access is granted for this bucket key.
 var grant = func(opts *Config, key string, perPeriod, periodSeconds int) (granted bool, remaining int, err error) {
 	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
@@ -164,9 +165,4 @@ var grant = func(opts *Config, key string, perPeriod, periodSeconds int) (grante
 
 	remaining = perPeriod - len(keys)
 	return remaining >= 1, remaining, nil
-}
-
-// a helper function to make it easier to test
-var now = func() time.Time {
-	return time.Now()
 }
