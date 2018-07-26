@@ -27,9 +27,13 @@ var (
 // Helper function to make it easier to test.
 var now = func() time.Time { return time.Now() }
 
+type redisPool interface {
+	Get() redis.Conn
+}
+
 // Config for RateLimit
 type Config struct {
-	Pool       *redis.Pool
+	Pool       redisPool
 	GrantOnErr bool
 	ErrorLog   func(error, string)
 
