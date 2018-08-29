@@ -100,13 +100,13 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 			if err != nil {
 				opts.ErrorLog(err, "failed to check if access is granted")
 				// returns an extra header when redis is down
-				w.Header().Add("X-Rate-Limit-Err", "1")
+				w.Header().Add("X-RateLimit-Err", "1")
 				granted = opts.GrantOnErr
 			}
 
-			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriodLocal))
-			w.Header().Add("X-Rate-Limit-Remaining", strconv.Itoa(remaining))
-			w.Header().Add("X-Rate-Limit-Reset", strconv.Itoa(periodSecondsLocal))
+			w.Header().Add("X-RateLimit-Limit", strconv.Itoa(perPeriodLocal))
+			w.Header().Add("X-RateLimit-Remaining", strconv.Itoa(remaining))
+			w.Header().Add("X-RateLimit-Reset", strconv.Itoa(periodSecondsLocal))
 
 			if !granted {
 				w.WriteHeader(http.StatusTooManyRequests)
