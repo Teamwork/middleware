@@ -104,9 +104,9 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 				granted = opts.GrantOnErr
 			}
 
-			w.Header().Add("X-Rate-Limit-Limit", strconv.Itoa(perPeriodLocal))
-			w.Header().Add("X-Rate-Limit-Remaining", strconv.Itoa(remaining))
-			w.Header().Add("X-Rate-Limit-Reset", strconv.Itoa(periodSecondsLocal))
+			w.Header().Add("X-RateLimit-Limit", strconv.Itoa(perPeriodLocal))
+			w.Header().Add("X-RateLimit-Remaining", strconv.Itoa(remaining))
+			w.Header().Add("X-RateLimit-Reset", strconv.Itoa(periodSecondsLocal))
 
 			if !granted {
 				w.WriteHeader(http.StatusTooManyRequests)
