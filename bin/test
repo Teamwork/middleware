@@ -1,22 +1,54 @@
 #!/bin/sh
-
-usage="Run all tests"
+# shellcheck disable=SC2039
+#
+# Generated from https://github.com/Teamwork/strut
+# DO NOT EDIT DIRECTLY!
 
 # Setup
 #######
 set -euC
 root="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=start
 . "$root/bin/start"
 
 # Run action
 ############
 
+# shellcheck disable=SC1090
+[ -f "$root/bin/test-pre" ] && . "$root/bin/test-pre"
+
 # If we don't set this some stacks may not be complete when encountering race
 # conditions. Uses a bit more memory, but we usually have enough of that.
 export GORACE="history_size=4"
 
-$pre_test_func
+# Extract tags and run "$root/bin/test-tag-<tag>" callback if that file exists.
+tt() {
+	local tags=""
 
-v_flag=""
-[ $verbose -ge 1 ] && v_flag="-v"
-go test $v_flag -race -tags="${test_tags# }" $(go list ./... | grep -v /vendor/)
+	while :; do
+		[ $# = 0 ] && break
+
+		# -tags foo
+		# -tags 'foo bar'
+		if [ "$1" = "-tags" ]; then
+			shift
+			tags="$tags $1"
+		# -tags=foo
+		# -tags='foo bar'
+		elif echo "$1" | grep -q '^-tags='; then
+			tags="$tags $(echo "$1" | cut -d= -f2-)"
+		fi
+
+		shift
+	done
+
+	for t in $tags; do
+		local f="$root/bin/test-tag-$t"
+		# shellcheck disable=SC1090
+		[ -f "$f" ] && . "$f"
+	done
+	:
+}
+tt "$@"
+
+go test "$@"

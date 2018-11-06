@@ -25,7 +25,7 @@ func Rescue(
 
 	if log == nil {
 		log = func(r *http.Request, err error) {
-			fmt.Fprintf(os.Stderr, "%v: %v", r.URL.Path, err)
+			_, _ = fmt.Fprintf(os.Stderr, "%v: %v", r.URL.Path, err)
 		}
 	}
 

@@ -23,7 +23,7 @@ func BlockTraversal(root string) func(http.Handler) http.Handler {
 			abs, err := filepath.Abs(root + r.URL.Path)
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintf(w, "Not found: %v", r.URL.Path)
+				_, _ = fmt.Fprintf(w, "Not found: %v", r.URL.Path)
 				return
 			}
 
