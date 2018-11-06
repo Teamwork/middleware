@@ -1,3 +1,3 @@
-coverage.txt
-.DS_Store
 /vendor
+/coverage.txt
+.DS_Store
