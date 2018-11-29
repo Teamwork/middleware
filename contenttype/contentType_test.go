@@ -3,6 +3,7 @@ package contenttype
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/teamwork/test"
@@ -38,7 +39,7 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{"woot woot"},
 				},
 			},
-			"invalid content type: woot woot",
+			`invalid content type: "woot woot"`,
 			http.StatusBadRequest,
 		},
 		{
@@ -68,7 +69,7 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{""},
 				},
 			},
-			"invalid content type: ",
+			`invalid content type: ""`,
 			http.StatusBadRequest,
 		},
 		{
@@ -78,42 +79,47 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{"So this isn't really a valid value"},
 				},
 			},
-			"invalid content type: So this isn't really a valid value",
+			`invalid content type: "So this isn't really a valid value"`,
 			http.StatusBadRequest,
 		},
 		{
 			&http.Request{
+				URL:    &url.URL{Path: "/p"},
 				Method: http.MethodPost,
 				Header: http.Header{
 					"Content-Type": []string{"application/woot"},
 				},
 			},
-			"unknown content type: application/woot; " +
+			`unknown content type: "application/woot" for "/p"; ` +
 				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
 			http.StatusBadRequest,
 		},
 		{
 			&http.Request{
+				URL:    &url.URL{Path: "/p"},
 				Method: http.MethodPost,
 				Header: http.Header{
 					"Content-Type": []string{"application/jsonEXTRA"},
 				},
 			},
-			"unknown content type: application/jsonextra; " +
+			`unknown content type: "application/jsonextra" for "/p"; ` +
 				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
 			http.StatusBadRequest,
 		},
 	}
 
-	for i, tc := range cases {
+	for i, tt := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, tc.in, Validate(nil)(handle{}).ServeHTTP)
-
-			if rr.Code != tc.wantCode {
-				t.Errorf("want code %v, got %v", tc.wantCode, rr.Code)
+			if tt.in.URL == nil {
+				tt.in.URL = &url.URL{Path: "/"}
 			}
-			if b := rr.Body.String(); b != tc.wantBody {
-				t.Errorf("body wrong:\nwant: %#v\ngot:  %#v\n", tc.wantBody, b)
+			rr := test.HTTP(t, tt.in, Validate(nil)(handle{}).ServeHTTP)
+
+			if rr.Code != tt.wantCode {
+				t.Errorf("want code %v, got %v", tt.wantCode, rr.Code)
+			}
+			if b := rr.Body.String(); b != tt.wantBody {
+				t.Errorf("body wrong:\nwant: %#v\ngot:  %#v\n", tt.wantBody, b)
 			}
 		})
 	}
@@ -122,7 +128,7 @@ func TestValidate(t *testing.T) {
 func TestValidateOptions(t *testing.T) {
 	cases := []struct {
 		in       *http.Request
-		opts     *Options
+		opts     map[string]Options
 		wantCode int
 	}{
 		{
@@ -132,10 +138,10 @@ func TestValidateOptions(t *testing.T) {
 					"Content-Type": []string{"woot/woot"},
 				},
 			},
-			&Options{
+			map[string]Options{"": {
 				Methods:           []string{"GET"},
 				ValidContentTypes: []string{"woot/woot"},
-			},
+			}},
 			http.StatusOK,
 		},
 		{
@@ -145,10 +151,10 @@ func TestValidateOptions(t *testing.T) {
 					"Content-Type": []string{"woot"},
 				},
 			},
-			&Options{
+			map[string]Options{"": {
 				Methods:           []string{"GET"},
 				ValidContentTypes: []string{"woot/woot"},
-			},
+			}},
 			http.StatusBadRequest,
 		},
 		{
@@ -176,21 +182,60 @@ func TestValidateOptions(t *testing.T) {
 				Method: http.MethodPost,
 				Header: http.Header{},
 			},
-			&Options{
+			map[string]Options{"": {
 				Methods:           []string{http.MethodPost, http.MethodPut, http.MethodDelete},
 				ValidContentTypes: []string{ContentTypeJSON, ContentTypeFormEncoded, ContentTypeFormData},
 				AllowEmpty:        true,
+			}},
+			http.StatusOK,
+		},
+	}
+
+	for i, tt := range cases {
+		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+			tt.in.URL = &url.URL{Path: "/"}
+			rr := test.HTTP(t, tt.in, Validate(tt.opts)(handle{}).ServeHTTP)
+
+			if rr.Code != tt.wantCode {
+				t.Errorf("want code %v, got %v", tt.wantCode, rr.Code)
+			}
+		})
+	}
+}
+
+func TestPathMatch(t *testing.T) {
+	cases := []struct {
+		in       *http.Request
+		opts     map[string]Options
+		wantCode int
+	}{
+		{
+			&http.Request{
+				URL:    &url.URL{Path: "/foo"},
+				Method: http.MethodGet,
+				Header: http.Header{
+					"Content-Type": []string{"woot/woot"},
+				},
+			},
+			map[string]Options{
+				"": {
+					Methods:           []string{"GET"},
+					ValidContentTypes: []string{"asd/def"},
+				},
+				"/foo": {
+					Methods:           []string{"GET"},
+					ValidContentTypes: []string{"woot/woot"},
+				},
 			},
 			http.StatusOK,
 		},
 	}
 
-	for i, tc := range cases {
+	for i, tt := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, tc.in, Validate(tc.opts)(handle{}).ServeHTTP)
-
-			if rr.Code != tc.wantCode {
-				t.Errorf("want code %v, got %v", tc.wantCode, rr.Code)
+			rr := test.HTTP(t, tt.in, Validate(tt.opts)(handle{}).ServeHTTP)
+			if rr.Code != tt.wantCode {
+				t.Errorf("want code %v, got %v", tt.wantCode, rr.Code)
 			}
 		})
 	}
