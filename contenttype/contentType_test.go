@@ -39,7 +39,7 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{"woot woot"},
 				},
 			},
-			"invalid content type: woot woot",
+			`invalid content type: "woot woot"`,
 			http.StatusBadRequest,
 		},
 		{
@@ -69,7 +69,7 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{""},
 				},
 			},
-			"invalid content type: ",
+			`invalid content type: ""`,
 			http.StatusBadRequest,
 		},
 		{
@@ -79,28 +79,30 @@ func TestValidate(t *testing.T) {
 					"Content-Type": []string{"So this isn't really a valid value"},
 				},
 			},
-			"invalid content type: So this isn't really a valid value",
+			`invalid content type: "So this isn't really a valid value"`,
 			http.StatusBadRequest,
 		},
 		{
 			&http.Request{
+				URL:    &url.URL{Path: "/p"},
 				Method: http.MethodPost,
 				Header: http.Header{
 					"Content-Type": []string{"application/woot"},
 				},
 			},
-			"unknown content type: application/woot; " +
+			`unknown content type: "application/woot" for "/p"; ` +
 				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
 			http.StatusBadRequest,
 		},
 		{
 			&http.Request{
+				URL:    &url.URL{Path: "/p"},
 				Method: http.MethodPost,
 				Header: http.Header{
 					"Content-Type": []string{"application/jsonEXTRA"},
 				},
 			},
-			"unknown content type: application/jsonextra; " +
+			`unknown content type: "application/jsonextra" for "/p"; ` +
 				"must be one of application/json, application/x-www-form-urlencoded, multipart/form-data",
 			http.StatusBadRequest,
 		},
@@ -108,7 +110,9 @@ func TestValidate(t *testing.T) {
 
 	for i, tt := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			tt.in.URL = &url.URL{Path: "/"}
+			if tt.in.URL == nil {
+				tt.in.URL = &url.URL{Path: "/"}
+			}
 			rr := test.HTTP(t, tt.in, Validate(nil)(handle{}).ServeHTTP)
 
 			if rr.Code != tt.wantCode {

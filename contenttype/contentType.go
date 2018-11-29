@@ -89,7 +89,7 @@ func Validate(opts map[string]Options) func(http.Handler) http.Handler {
 			ct, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
 			if ct == "" {
 				w.WriteHeader(http.StatusBadRequest)
-				_, _ = w.Write([]byte(fmt.Sprintf("invalid content type: %v",
+				_, _ = w.Write([]byte(fmt.Sprintf("invalid content type: %q",
 					r.Header.Get("Content-Type"))))
 				return
 			}
@@ -102,8 +102,9 @@ func Validate(opts map[string]Options) func(http.Handler) http.Handler {
 			}
 
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(fmt.Sprintf("unknown content type: %v; must be one of %v",
-				ct, strings.Join(opt.ValidContentTypes, ", "))))
+			_, _ = w.Write([]byte(fmt.Sprintf(
+				"unknown content type: %q for %q; must be one of %v",
+				ct, r.URL.Path, strings.Join(opt.ValidContentTypes, ", "))))
 		})
 	}
 }
