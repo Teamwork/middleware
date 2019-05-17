@@ -35,7 +35,12 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(ctx context.Context, opts *Config, k string, perPeriodLocal, periodSecondsLocal int) (bool, int, error) {
+			grantFunc: func(
+				ctx context.Context,
+				opts *Config,
+				k string,
+				perPeriodLocal, periodSecondsLocal int,
+			) (bool, int, error) {
 				return true, 0, nil
 			},
 			getKey: func(req *http.Request) string {
@@ -50,7 +55,12 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return true
 			},
-			grantFunc: func(ctx context.Context, opts *Config, k string, perPeriodLocal, periodSecondsLocal int) (bool, int, error) {
+			grantFunc: func(
+				ctx context.Context,
+				opts *Config,
+				k string,
+				perPeriodLocal, periodSecondsLocal int,
+			) (bool, int, error) {
 				return false, 0, nil
 			},
 			getKey: func(req *http.Request) string {
@@ -65,7 +75,12 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(ctx context.Context, opts *Config, k string, perPeriodLocal, periodSecondsLocal int) (bool, int, error) {
+			grantFunc: func(
+				ctx context.Context,
+				opts *Config,
+				k string,
+				perPeriodLocal, periodSecondsLocal int,
+			) (bool, int, error) {
 				return false, 0, nil
 			},
 			getKey: func(req *http.Request) string {
@@ -80,7 +95,12 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(ctx context.Context, opts *Config, k string, perPeriodLocal, periodSecondsLocal int) (bool, int, error) {
+			grantFunc: func(
+				ctx context.Context,
+				opts *Config,
+				k string,
+				perPeriodLocal, periodSecondsLocal int,
+			) (bool, int, error) {
 				return false, 0, fmt.Errorf("test")
 			},
 			getKey: func(req *http.Request) string {
@@ -95,7 +115,12 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(ctx context.Context, opts *Config, k string, perPeriodLocal, periodSecondsLocal int) (bool, int, error) {
+			grantFunc: func(
+				ctx context.Context,
+				opts *Config,
+				k string,
+				perPeriodLocal, periodSecondsLocal int,
+			) (bool, int, error) {
 				return false, 0, fmt.Errorf("test")
 			},
 			getKey: func(req *http.Request) string {
@@ -110,7 +135,12 @@ func TestRateLimit(t *testing.T) {
 			ignore: func(req *http.Request) bool {
 				return false
 			},
-			grantFunc: func(ctx context.Context, opts *Config, k string, perPeriodLocal, periodSecondsLocal int) (bool, int, error) {
+			grantFunc: func(
+				ctx context.Context,
+				opts *Config,
+				k string,
+				perPeriodLocal, periodSecondsLocal int,
+			) (bool, int, error) {
 				if perPeriodLocal != 2 {
 					return false, 0, fmt.Errorf("unexpected perPeriod %d", perPeriodLocal)
 				}
