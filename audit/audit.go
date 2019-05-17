@@ -54,8 +54,8 @@ type Options struct {
 // Audit entry.
 type Audit struct {
 	ID             int64  `db:"id"`
+	InstallationID int64  `db:"installationId"`
 	UserID         int64  `db:"users_id"`
-	InstallationID int64  `db:"installations_id"`
 	Host           string `db:"host"`   // e.g. "example.com"
 	Path           string `db:"path"`   // e.g. "/hello"
 	Method         string `db:"method"` // e.g. "GET", "POST"
