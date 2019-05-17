@@ -123,7 +123,13 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 }
 
 // grant checks if the access is granted for this bucket key.
-var grant = func(ctx context.Context, opts *Config, key string, perPeriod, periodSeconds int) (granted bool, remaining int, err error) {
+var grant = func(
+	ctx context.Context,
+	opts *Config,
+	key string,
+	perPeriod, periodSeconds int,
+) (granted bool, remaining int, err error) {
+
 	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
