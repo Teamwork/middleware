@@ -2,6 +2,7 @@
 package ratelimit // import "github.com/teamwork/middleware/ratelimit"
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -28,6 +29,10 @@ var now = func() time.Time { return time.Now() }
 
 type redisPool interface {
 	Get() redis.Conn
+}
+
+type redisPoolCtx interface {
+	GetWithContext(ctx context.Context) redis.Conn
 }
 
 // Config for RateLimit
@@ -95,7 +100,7 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 			}
 
 			key := opts.GetKey(r)
-			granted, remaining, err := grant(&opts, key, perPeriodLocal, periodSecondsLocal)
+			granted, remaining, err := grant(r.Context(), &opts, key, perPeriodLocal, periodSecondsLocal)
 			if err != nil {
 				opts.ErrorLog(err, "failed to check if access is granted")
 				// returns an extra header when redis is down
@@ -118,14 +123,29 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 }
 
 // grant checks if the access is granted for this bucket key.
-var grant = func(opts *Config, key string, perPeriod, periodSeconds int) (granted bool, remaining int, err error) {
+var grant = func(
+	ctx context.Context,
+	opts *Config,
+	key string,
+	perPeriod, periodSeconds int,
+) (granted bool, remaining int, err error) {
+
 	accessTime := now().UnixNano()
 	duration, err := time.ParseDuration(fmt.Sprintf("%ds", periodSeconds))
 	if err != nil {
 		return false, 0, err
 	}
 
-	conn := opts.Pool.Get()
+	var conn redis.Conn
+	if poolCtx, ok := opts.Pool.(redisPoolCtx); ok {
+		// Optional approach to retrieve the pool injecting the request context.
+		// Useful for encapsulating the pool layer for request specific behaviours
+		// (e.g. DataDog tracer).
+		conn = poolCtx.GetWithContext(ctx)
+	} else {
+		conn = opts.Pool.Get()
+	}
+
 	defer func() {
 		err := conn.Close()
 		if err != nil {
