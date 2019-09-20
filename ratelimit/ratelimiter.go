@@ -181,6 +181,11 @@ var grant = func(
 		return false, 0, errors.Wrap(err, "transaction failed")
 	}
 
+	_, err = conn.Do("EXPIRE", key, 60*60*24*30)
+	if err != nil {
+		return false, 0, errors.Wrap(err, "failed to set TTL on zlist")
+	}
+
 	keys, err := redis.Strings(results[len(results)-1], err)
 	if err != nil {
 		return false, 0, errors.Wrap(err, "failed to parse results")
