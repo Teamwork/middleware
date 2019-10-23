@@ -56,6 +56,14 @@ func Test(t *testing.T) {
 				"Strict-Transport-Security": []string{"max-age=666"},
 			},
 		},
+		{
+			Config{
+				ReferrerPolicy: "strict-origin-when-cross-origin",
+			},
+			http.Header{
+				"Referrer-Policy": []string{"strict-origin-when-cross-origin"},
+			},
+		},
 	}
 
 	for i, tc := range cases {
