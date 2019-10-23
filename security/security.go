@@ -45,6 +45,12 @@ type Config struct {
 	// violations and doesn't block anything, which is useful for testing new
 	// policies.
 	ContentSecurityPolicyReportOnly map[string][]string
+
+	// ReferrerPolicy allows us to make sure we don't leak possibly sensitive
+	// paths or query parameters to other sites.
+	//
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
+	ReferrerPolicy string
 }
 
 // DefaultConfig is the default Security middleware config.
@@ -87,6 +93,9 @@ func WithConfig(config Config, rootDomain string) func(http.Handler) http.Handle
 			}
 			if config.XContentTypeOptions {
 				w.Header().Set("X-Content-Type-Options", "nosniff")
+			}
+			if config.ReferrerPolicy != "" {
+				w.Header().Set("Referrer-Policy", config.ReferrerPolicy)
 			}
 
 			next.ServeHTTP(w, r)
