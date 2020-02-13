@@ -12,3 +12,5 @@ require (
 	github.com/teamwork/utils v0.0.0-20171107171849-80cee17504c9
 	github.com/tomasen/realip v0.0.0-20171212133304-b5850897b7b5
 )
+
+go 1.13

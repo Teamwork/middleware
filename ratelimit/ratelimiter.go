@@ -22,6 +22,9 @@ var (
 	// by the client before receiving a 429 error
 	perPeriod     = 20
 	periodSeconds = 60
+
+	// keyExpiration is how long the keys are kept in redis when no longer unused
+	keyExpiration = 86400
 )
 
 // Helper function to make it easier to test.
@@ -166,6 +169,12 @@ var grant = func(
 
 	// Remove any keys that are outside of the interval
 	err = conn.Send("ZREMRANGEBYSCORE", key, 0, accessTime-duration.Nanoseconds())
+	if err != nil {
+		return false, 0, err
+	}
+
+	// Make sure to expire the key when it's no longer in use
+	err = conn.Send("EXPIRE", key, keyExpiration)
 	if err != nil {
 		return false, 0, err
 	}
