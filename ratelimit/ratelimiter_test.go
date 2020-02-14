@@ -234,6 +234,7 @@ func TestGrant(t *testing.T) {
 				conn.Command("MULTI")
 				conn.Command("ZADD", "test", unixNano, unixNano).Expect("QUEUED")
 				conn.Command("ZREMRANGEBYSCORE", "test", 0, unixNano-duration.Nanoseconds()).Expect("QUEUED")
+				conn.Command("EXPIRE", "test", keyExpiration).Expect("QUEUED")
 				conn.Command("ZRANGE", "test", 0, -1).Expect("QUEUED")
 				conn.Command("EXEC").ExpectSlice(
 					1, // result for zadd
@@ -253,6 +254,7 @@ func TestGrant(t *testing.T) {
 				conn.Command("MULTI")
 				conn.Command("ZADD", "test", unixNano, unixNano).Expect(int64(1))
 				conn.Command("ZREMRANGEBYSCORE", "test", 0, unixNano-duration.Nanoseconds()).Expect(int64(1))
+				conn.Command("EXPIRE", "test", keyExpiration).Expect(int64(1))
 				conn.Command("ZRANGE", "test", 0, -1).Expect(int64(1))
 				conn.Command("EXEC").ExpectSlice(
 					1, // result for zadd
