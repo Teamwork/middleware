@@ -12,9 +12,9 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rafaeljusto/redigomock v0.0.0-20170720131524-7ae0511314e9 h1:AgFSzGRVSy1kZ8EBHycQc6qK9gVqhJnVI2H/dk2cY/Y=
 github.com/rafaeljusto/redigomock v0.0.0-20170720131524-7ae0511314e9/go.mod h1:JaY6n2sDr+z2WTsXkOmNRUfDy6FN0L6Nk7x06ndm4tY=
+github.com/ripexz/rip v1.0.1 h1:F6HfR11O5GdlI9W/peHY86HVYoYMvZxsRnZ56X4i3qA=
+github.com/ripexz/rip v1.0.1/go.mod h1:AwV/BSi/rkcMvnlmTN0NL/OXCRD1HFGMp362XH5wUTo=
 github.com/teamwork/test v0.0.0-20170828180701-109d4a7e538b h1:4P5E6x8RfIN5e1PSdlwl3UtqIrgxR8ZUPNlXjJGVoGo=
 github.com/teamwork/test v0.0.0-20170828180701-109d4a7e538b/go.mod h1:TIbx7tx6WHBjQeLRM4eWQZBL7kmBZ7/KI4x4v7Y5YmA=
 github.com/teamwork/utils v0.0.0-20171107171849-80cee17504c9 h1:Ygu9U9154Ed0ix+wRizgBN/QVKQ0WNv347NQ5gwD5YU=
 github.com/teamwork/utils v0.0.0-20171107171849-80cee17504c9/go.mod h1:rmPaJUVv426LGg3QR31m1N0bfpCdCVyh3dCWsJTQeDA=
-github.com/tomasen/realip v0.0.0-20171212133304-b5850897b7b5 h1:qmzfCoiF4NbgNyVDzqw1hEV2N71M4Tmu3CyOr8qQW6k=
-github.com/tomasen/realip v0.0.0-20171212133304-b5850897b7b5/go.mod h1:o8v6yHRoik09Xen7gje4m9ERNah1d1PPsVq1VEx9vE4=

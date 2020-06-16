@@ -11,7 +11,7 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
-	"github.com/tomasen/realip"
+	"github.com/ripexz/rip"
 )
 
 var (
@@ -67,10 +67,12 @@ func SetRate(n int, d time.Duration) error {
 	return nil
 }
 
-// IPBucket is a generator of rate limit buckets based on client's IP address
-func IPBucket(prefix string) func(*http.Request) string {
+// IPBucket is a generator of rate limit buckets based on client's IP address.
+// Optional filter function can be passed in, defaults to finding first public IP,
+// see: https://godoc.org/github.com/ripexz/rip
+func IPBucket(prefix string, filter func([]string) (string, bool)) func(*http.Request) string {
 	return func(req *http.Request) string {
-		return fmt.Sprintf("%s-%s", prefix, realip.RealIP(req))
+		return fmt.Sprintf("%s-%s", prefix, rip.FromRequest(req, filter))
 	}
 }
 
