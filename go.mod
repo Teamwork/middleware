@@ -8,9 +8,9 @@ require (
 	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rafaeljusto/redigomock v0.0.0-20170720131524-7ae0511314e9
+	github.com/ripexz/rip v1.0.1
 	github.com/teamwork/test v0.0.0-20170828180701-109d4a7e538b
 	github.com/teamwork/utils v0.0.0-20171107171849-80cee17504c9
-	github.com/tomasen/realip v0.0.0-20171212133304-b5850897b7b5
 )
 
 go 1.13
