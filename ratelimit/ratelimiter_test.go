@@ -244,11 +244,29 @@ func TestGrant(t *testing.T) {
 					})
 			},
 		},
-
+		{
+			description: "it should grant access when there's the exactly limit on redis set",
+			granted:     true,
+			remaining:   0,
+			stub: func() {
+				unixNano := now().UnixNano()
+				conn.Command("MULTI")
+				conn.Command("ZADD", "test", unixNano, unixNano).Expect("QUEUED")
+				conn.Command("ZREMRANGEBYSCORE", "test", 0, unixNano-duration.Nanoseconds()).Expect("QUEUED")
+				conn.Command("EXPIRE", "test", keyExpiration).Expect("QUEUED")
+				conn.Command("ZRANGE", "test", 0, -1).Expect("QUEUED")
+				conn.Command("EXEC").ExpectSlice(
+					1, // result for zadd
+					0, // result for zrem
+					[]interface{}{ // result for zrange
+						[]byte("1"), []byte("2"),
+					})
+			},
+		},
 		{
 			description: "it should block access when there are more elements in redis than the limit",
 			granted:     false,
-			remaining:   0,
+			remaining:   -1,
 			stub: func() {
 				unixNano := now().UnixNano()
 				conn.Command("MULTI")
@@ -260,7 +278,7 @@ func TestGrant(t *testing.T) {
 					1, // result for zadd
 					0, // result for zrem
 					[]interface{}{ // result for zrange
-						[]byte("1"), []byte("2"),
+						[]byte("1"), []byte("2"), []byte("3"),
 					})
 			},
 		},
