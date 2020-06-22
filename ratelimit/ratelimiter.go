@@ -198,5 +198,10 @@ var grant = func(
 	}
 
 	remaining = perPeriod - len(keys)
-	return remaining >= 1, remaining, nil
+
+	// the reason why we consider remaining zero as valid is because we register
+	// the current request before counting. For example, if we have 1 request
+	// per minute allowed, even if I send a request every 60 seconds, the
+	// remaining would be still zero.
+	return remaining >= 0, remaining, nil
 }
