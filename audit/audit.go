@@ -49,6 +49,8 @@ type Options struct {
 	SkipQueryParams    bool
 	SkipformParams     bool
 	SkipRequestBody    bool
+	// Option to not include raw request data with the log
+	SkipLogRawBody bool
 }
 
 // Audit entry.
@@ -214,8 +216,14 @@ func (a *Audit) filterFields(r *http.Request, opts Options) {
 	if bodyIsJSON && len(a.RequestBody) > 0 {
 		err := json.Unmarshal(a.RequestBody, &body)
 		if err != nil {
-			opts.Auditor.Log(r, errors.Wrapf(err, "could not parse body for %s %s: %s",
-				r.Method, r.URL.String(), stringutil.Left(string(a.RequestBody), 4000)))
+			msgFmt := "could not parse body for %s %s"
+			msgArgs := []interface{}{r.Method, r.URL.String()}
+
+			if !opts.SkipLogRawBody {
+				msgFmt += ": %s"
+				msgArgs = append(msgArgs, stringutil.Left(string(a.RequestBody), 4000))
+			}
+			opts.Auditor.Log(r, errors.Wrapf(err, msgFmt, msgArgs...))
 		}
 	}
 
