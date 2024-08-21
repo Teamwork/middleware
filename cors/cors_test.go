@@ -31,7 +31,7 @@ func TestDo(t *testing.T) {
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, &tc.req, Add(tc.opts)(handle{}).ServeHTTP)
+			rr := test.HTTP(t, &tc.req, Add(tc.opts)(handle{}))
 
 			if rr.Code != 200 {
 				t.Fatalf("code != 200: %v", rr.Code)

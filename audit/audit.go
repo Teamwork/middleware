@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/teamwork/utils/httputilx"
-	"github.com/teamwork/utils/sliceutil"
-	"github.com/teamwork/utils/stringutil"
+	"github.com/teamwork/utils/v2/httputilx"
+	"github.com/teamwork/utils/v2/sliceutil"
+	"github.com/teamwork/utils/v2/stringutil"
 )
 
 // Auditor is a function which will do something with a new audit.
@@ -153,11 +153,11 @@ func Do(opts Options) func(http.Handler) http.Handler {
 
 // Middleware is the actual implementation.
 func Middleware(opts Options, r *http.Request) {
-	if len(opts.Methods) > 0 && !sliceutil.InStringSlice(opts.Methods, r.Method) {
+	if len(opts.Methods) > 0 && !sliceutil.Contains(opts.Methods, r.Method) {
 		return
 	}
 
-	if sliceutil.InStringSlice(opts.IgnorePaths, r.URL.Path) {
+	if sliceutil.Contains(opts.IgnorePaths, r.URL.Path) {
 		return
 	}
 

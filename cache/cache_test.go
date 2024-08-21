@@ -15,7 +15,7 @@ func (h handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestNoCache(t *testing.T) {
-	rr := test.HTTP(t, nil, NoCache(handle{}).ServeHTTP)
+	rr := test.HTTP(t, nil, NoCache(handle{}))
 	if rr.Code != http.StatusOK {
 		t.Errorf("want code 200, got %v", rr.Code)
 	}
@@ -28,7 +28,7 @@ func TestNoCache(t *testing.T) {
 }
 
 func TestNoStore(t *testing.T) {
-	rr := test.HTTP(t, nil, NoStore(handle{}).ServeHTTP)
+	rr := test.HTTP(t, nil, NoStore(handle{}))
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("want code 200, got %v", rr.Code)
