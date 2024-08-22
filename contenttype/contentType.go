@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/teamwork/utils/sliceutil"
+	"github.com/teamwork/utils/v2/sliceutil"
 )
 
 // Options for Validate().
@@ -76,7 +76,7 @@ func Validate(opts map[string]Options) func(http.Handler) http.Handler {
 				opt = opts[""]
 			}
 
-			if len(opt.Methods) > 0 && !sliceutil.InStringSlice(opt.Methods, r.Method) {
+			if len(opt.Methods) > 0 && !sliceutil.Contains(opt.Methods, r.Method) {
 				next.ServeHTTP(w, r)
 				return
 			}
