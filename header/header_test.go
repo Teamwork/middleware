@@ -45,7 +45,7 @@ func TestSet(t *testing.T) {
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, tc.in, Set(tc.conf)(handle{}).ServeHTTP)
+			rr := test.HTTP(t, tc.in, Set(tc.conf)(handle{}))
 
 			v := rr.Header().Get("API-Version")
 			if v != tc.wantHeader {

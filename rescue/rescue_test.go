@@ -15,7 +15,7 @@ func (h handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestRescue(t *testing.T) {
-	rr := test.HTTP(t, nil, Rescue(nil, false)(handle{}).ServeHTTP)
+	rr := test.HTTP(t, nil, Rescue(nil, false)(handle{}))
 
 	if rr.Code != 200 {
 		t.Errorf("want code %v, got %v", 200, rr.Code)
@@ -33,7 +33,7 @@ func (h panicy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestRescuePanic(t *testing.T) {
-	rr := test.HTTP(t, nil, Rescue(nil, false)(panicy{}).ServeHTTP)
+	rr := test.HTTP(t, nil, Rescue(nil, false)(panicy{}))
 
 	if rr.Code != 500 {
 		t.Errorf("want code %v, got %v", 200, rr.Code)

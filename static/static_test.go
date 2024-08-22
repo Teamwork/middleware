@@ -36,7 +36,7 @@ func TestBlockTraversal(t *testing.T) {
 				t.Fatalf("cannot make request: %v", err)
 			}
 
-			rr := test.HTTP(t, req, BlockTraversal(tc.root)(handle{}).ServeHTTP)
+			rr := test.HTTP(t, req, BlockTraversal(tc.root)(handle{}))
 			if rr.Code != tc.wantCode {
 				t.Errorf("\nout:  %#v\nwant: %#v\n", rr.Code, tc.wantCode)
 			}
@@ -69,7 +69,7 @@ func TestBlockDotfiles(t *testing.T) {
 				t.Fatalf("cannot make request: %v", err)
 			}
 
-			rr := test.HTTP(t, req, BlockDotfiles(handle{}).ServeHTTP)
+			rr := test.HTTP(t, req, BlockDotfiles(handle{}))
 			if rr.Code != tc.wantCode {
 				t.Errorf("\nout:  %#v\nwant: %#v\n", rr.Code, tc.wantCode)
 			}

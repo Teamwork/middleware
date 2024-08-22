@@ -69,7 +69,7 @@ func Test(t *testing.T) {
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 			req := &http.Request{Host: "example.com"}
-			rr := test.HTTP(t, req, WithConfig(tc.in, "example.com")(handle{}).ServeHTTP)
+			rr := test.HTTP(t, req, WithConfig(tc.in, "example.com")(handle{}))
 			out := rr.Header()
 			out.Del("Content-Type")
 			// TODO: we use a map so order isn't guaranteed :-/

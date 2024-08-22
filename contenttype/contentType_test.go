@@ -113,7 +113,7 @@ func TestValidate(t *testing.T) {
 			if tt.in.URL == nil {
 				tt.in.URL = &url.URL{Path: "/"}
 			}
-			rr := test.HTTP(t, tt.in, Validate(nil)(handle{}).ServeHTTP)
+			rr := test.HTTP(t, tt.in, Validate(nil)(handle{}))
 
 			if rr.Code != tt.wantCode {
 				t.Errorf("want code %v, got %v", tt.wantCode, rr.Code)
@@ -194,7 +194,7 @@ func TestValidateOptions(t *testing.T) {
 	for i, tt := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 			tt.in.URL = &url.URL{Path: "/"}
-			rr := test.HTTP(t, tt.in, Validate(tt.opts)(handle{}).ServeHTTP)
+			rr := test.HTTP(t, tt.in, Validate(tt.opts)(handle{}))
 
 			if rr.Code != tt.wantCode {
 				t.Errorf("want code %v, got %v", tt.wantCode, rr.Code)
@@ -233,7 +233,7 @@ func TestPathMatch(t *testing.T) {
 
 	for i, tt := range cases {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			rr := test.HTTP(t, tt.in, Validate(tt.opts)(handle{}).ServeHTTP)
+			rr := test.HTTP(t, tt.in, Validate(tt.opts)(handle{}))
 			if rr.Code != tt.wantCode {
 				t.Errorf("want code %v, got %v", tt.wantCode, rr.Code)
 			}
