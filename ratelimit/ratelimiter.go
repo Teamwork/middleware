@@ -53,6 +53,12 @@ type Config struct {
 	// Rates returns the number of API calls (to all endpoints) that can be made
 	// by the client considering the request. If null global values will be used.
 	Rates func(*http.Request) (perPeriod, periodSeconds int)
+
+	// OnLimitReached is called when the rate limit is reached for a request.
+	// If not provided, a default implementation will be used that returns a 429
+	// status code with a "Too Many Requests" message.  The request is then
+	// terminated and the next handler is not called.
+	OnLimitReached func(*http.Request, http.ResponseWriter)
 }
 
 // SetRate set the rate limit rate.
@@ -91,6 +97,17 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 		}
 	}
 
+	if opts.OnLimitReached == nil {
+		opts.OnLimitReached = func(r *http.Request, w http.ResponseWriter) {
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, err := w.Write([]byte("Too Many Requests"))
+			if err != nil {
+				opts.ErrorLog(err, "failed to write response")
+			}
+			return
+		}
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if opts.Ignore != nil && opts.Ignore(r) {
@@ -118,7 +135,7 @@ func RateLimit(opts Config) func(http.Handler) http.Handler {
 			w.Header().Set("X-Rate-Limit-Reset", strconv.Itoa(periodSecondsLocal))
 
 			if !granted {
-				w.WriteHeader(http.StatusTooManyRequests)
+				opts.OnLimitReached(r, w)
 				return
 			}
 
